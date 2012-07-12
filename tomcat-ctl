@@ -1,0 +1,104 @@
+#!/usr/bin/env perl
+use v5.10;
+use File::Spec;
+use Getopt::Long;
+use Data::Dump qw{ dump };
+
+my $VERSION = $ENV{TOMCAT_VERSION};
+my $EXT     = $^O =~ /win32/i ? '.bat' : '.sh';
+
+GetOptions(
+    'version=s'     => \$VERSION,
+    'list'          => sub { list($VERSION) }, # list versions
+    'help'          => \&help,
+    'shutdown|down' => sub { ctl(shutdown => $PATH => $EXT => $VERSION) },
+    'startup|up'    => sub { ctl(startup  => $PATH => $EXT => $VERSION) },
+    'restart'       => sub { ctl(startup  => $PATH => $EXT => $VERSION);
+                             ctl(shutdown => $PATH => $EXT => $VERSION) },
+    'ping'          => sub { },
+    'install'       => sub { }
+);
+
+error(\&help) unless @ARGV;
+
+#
+# Functions
+
+sub path { File::Spec->join(@_) }
+
+sub error {
+    my ($code, @msg) = @_;
+
+    say STDERR @msg if @msg;
+    
+    if ( $code && ref $code eq 'CODE' ) {
+        $code->(@msg);
+    }
+
+    exit 1;
+}
+
+#
+# Commands
+sub ctl {
+    my ($cmd, $path, $ext, $version) = @_;
+    my $bin = path($ENV{HOME} => local => "apache-tomcat-$version" => bin => "${cmd}${ext}");
+
+    error(\&help => "must specify version") unless $version;
+
+    if ( -e $bin ) {
+        say "$cmd: Tomcat $version...";
+        say "running '$bin'";
+        system $bin;
+        say "DONE.";
+        exit 0;
+    }
+    else {
+        say STDERR "'$path' doesn't exist";
+        exit 1;
+    }
+}
+
+sub deploy {
+    my ($war) = @_;
+    say $war;
+    exit 0;
+}
+
+sub list {
+    my ($version) = @_;
+    say "Installed Tomcat Versions:";
+    say for map { $version && /$version/ ? "$_ * default " : $_ }
+        map { /(\d\.\d(?:\.\d\d)?)/g; $1 }
+        glob "$ENV{HOME}/local/apache-tomcat-*";
+
+    exit 0;
+}
+
+sub help {
+    say <<HELP;
+Usage: $0 [OPTIONS]
+
+  Options:
+     --version, -v VERSION
+        Specify a version to start
+     
+     --list, -l
+        List installed versions
+
+     --help, -h
+
+     --startup, -up
+        Startup tomcat server
+
+     --shutdown, -down
+        Shutdown tomcat server
+
+     --restart, -re
+        Restart tomcat server
+
+  returns 0 on success and 1 on failure
+HELP
+
+    exit 0;
+}
