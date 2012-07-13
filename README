@@ -1,0 +1,12 @@
+NAME
+    tomcat-ctl - Control Apache Tomcat from the commandline with simplicity
+
+SYNOPSIS
+        > tomcat-ctl --up
+        > tomcat-ctl --down
+        > tomcat-ctl --restart
+        > tomcat-ctl --list
+
+AUTHOR
+    Delon Newman <delon.newman@gmail.com>
+
