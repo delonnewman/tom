@@ -2,7 +2,6 @@
 use v5.10;
 use HTTP::Tiny;
 use File::Spec;
-use Archive::Zip;
 use Getopt::Long;
 use File::Basename;
 use Data::Dump qw{ dump };
@@ -10,6 +9,7 @@ use Data::Dump qw{ dump };
 my $VERSION = $ENV{TOMCAT_VERSION};
 my $HOME    = $ENV{HOME} // "$ENV{HOMEDRIVE}$ENV{HOMEPATH}";
 my $ROOT    = path($HOME => '.tomcat-ctl');
+my $INSTALL = path($HOME => 'local');
 my @MIRRORS = qw{
     http://mirrors.gigenet.com/apache/tomcat
     http://apache.tradebit.com/pub/tomcat
@@ -55,11 +55,10 @@ sub parse_version {
 sub extract {
     my ($f, $dir) = @_;
     say "Extracting...";
-    chdir $dir;
-    #say "$HOME/bin/7za e -o \"$dir\" \"$f\"";
     my $dir = path($dir => basename($f, '.zip'));
     system("$HOME/bin/7za e -y -o\"$dir\" $f");
     say "ok";
+    return 0;
 }
 
 #
@@ -99,7 +98,7 @@ sub list {
     say "Installed Tomcat Versions:";
     say for map { $version && /$version/ ? "$_ * default " : $_ }
         map { /(\d\.\d(?:\.\d\d)?)/g; $1 }
-        glob "$HOME/local/apache-tomcat-*";
+        glob "$INSTALL/apache-tomcat-*";
 
     return 0;
 }
@@ -113,28 +112,34 @@ sub install {
         "$_/tomcat-$major/v$version/bin/apache-tomcat-$version.zip";
     } @MIRRORS;
 
-    my $dir = path($ROOT => 'work');
-    mkdir $dir unless -e $dir;
+    my $install = path($INSTALL => "apache-tomcat-$version");
+    if ( -e $install ) {
+        say "Tomcat version $version is already installed at $install";
+        return 0
+    }
+    else {
+        my $work = path($ROOT => 'work');
+        mkdir $work unless -e $work;
 
-    say "Downloading...";
+        say "Downloading...";
 
-    my $t = HTTP::Tiny->new;
-    for my $url (@urls) {
-        my $f = path($dir => basename $url);
+        my $t = HTTP::Tiny->new;
+        for my $url (@urls) {
+            my $f = path($work => basename $url);
 
-        if ( -e $f ) { extract($f => $dir) }
-        else {
-            my $res = $t->get($url);
-            if ( $res->{success} ) {
-                open my $fh, '>', $f or die "can't write to $f";
-                binmode $fh;
-                print $fh $res->{content};
-                say "ok - downloaded to $f";
+            if ( -e $f ) { return extract($f => $INSTALL) }
+            else {
+                my $res = $t->get($url);
+                if ( $res->{success} ) {
+                    open my $fh, '>', $f or die "can't write to $f";
+                    binmode $fh;
+                    print $fh $res->{content};
+                    say "ok - downloaded to $f";
+                }
+
+                return extract($f => $INSTALL) if -e $f;
             }
-
-            extract($f => $dir) if -e $f;
         }
-
     }
 
     return 1;
