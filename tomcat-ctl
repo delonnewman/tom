@@ -25,7 +25,7 @@ GetOptions(
     'startup|up'    => sub { exit ctl(startup  => $VERSION) },
     'restart|re'    => sub {      ctl(shutdown => $VERSION);
                              exit ctl(startup  => $VERSION) },
-    'ping'          => sub { },
+    'ping'          => sub { exit ping("http://localhost:8080"); },
     'install'       => sub { exit install($VERSION) }
 );
 
@@ -101,6 +101,19 @@ sub list {
         glob "$INSTALL/apache-tomcat-*";
 
     return 0;
+}
+
+sub ping {
+    my ($url) = @_;
+    my $res = HTTP::Tiny->new(timeout => 10)->get($url);
+    if ( $res->{success} ) {
+        say "An HTTP server is up at $url";
+        return 0;
+    }
+    else {
+        say "Tomcat is not up.";
+        return 1;
+    }
 }
 
 sub install {
