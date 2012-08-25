@@ -28,7 +28,7 @@ GetOptions(
     'version=s' => \$VERSION,
     'host=s'    => \$HOST,
     'port=s'    => \$PORT,
-    'timeout=s' => \$TIMEOUT
+    'timeout=i' => \$TIMEOUT
 );
 
 commands(
@@ -81,6 +81,15 @@ sub extract {
     return 0;
 }
 
+sub plural {
+	my ($n, $str) = @_;
+	if ( $n == 1 ) { "$n $str" }
+	else {
+		if ( $str =~ /(s|z)$/i ) { "$n ${str}es" }
+		else                     { "$n ${str}s"  }
+	}
+}
+
 #
 # Commands
 sub ctl {
@@ -126,7 +135,7 @@ sub ping {
         return 0;
     }
     else {
-        say "Timed out after $time seconds when testing $url.";
+        say "Timed out after ", plural($time => "second"), " when testing $url.";
         return 1;
     }
 }
