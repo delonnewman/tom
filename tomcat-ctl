@@ -1,5 +1,7 @@
 #!/usr/bin/env perl
 use v5.10;
+use strict;
+use warnings;
 use HTTP::Tiny;
 use File::Spec;
 use Getopt::Long;
@@ -15,19 +17,31 @@ my @MIRRORS = qw{
     http://apache.tradebit.com/pub/tomcat
 };
 
+# ping defaults
+my $HOST    = 'localhost';
+my $PORT    = '8080';
+my $TIMEOUT = 1;
+
 mkdir $ROOT unless -e $ROOT;
 
 GetOptions(
-    'version=s'     => \$VERSION,
-    'list'          => sub { exit list($VERSION) }, # list versions
-    'help'          => \&help,
-    'shutdown|down' => sub { exit ctl(shutdown => $VERSION) },
-    'startup|up'    => sub { exit ctl(startup  => $VERSION) },
-    'restart|re'    => sub {      ctl(shutdown => $VERSION);
-                             exit ctl(startup  => $VERSION) },
-    'ping'          => sub { exit ping("http://localhost:8080"); },
-    'install'       => sub { exit install($VERSION) }
+    'version=s' => \$VERSION,
+    'host=s'    => \$HOST,
+    'port=s'    => \$PORT,
+    'timeout=s' => \$TIMEOUT
 );
+
+commands(
+    help    => \&help,
+    install => sub { exit install($VERSION) },
+    list    => sub { exit list($VERSION) },
+    ping    => sub { exit ping($HOST => $PORT, $TIMEOUT) },
+    up      => sub { exit ctl(startup  => $VERSION) },
+    down    => sub { exit ctl(shutdown => $VERSION) },
+    restart => sub {      ctl(shutdown => $VERSION);
+                     exit ctl(startup  => $VERSION) }
+);
+
 
 error(\&help) unless @ARGV;
 
@@ -46,6 +60,13 @@ sub error {
     }
 
     exit 1;
+}
+
+sub commands {
+    my %cmds = @_;
+    my $cmd = shift @ARGV;
+    if ( $cmds{$cmd} ) { $cmds{$cmd}->() }
+    else               { error(\&help => "'$cmd' is an invalid command") }
 }
 
 sub parse_version {
@@ -86,12 +107,6 @@ sub ctl {
     }
 }
 
-sub deploy {
-    my ($war) = @_;
-    say $war;
-    return 0;
-}
-
 sub list {
     my ($version) = @_;
     say "Installed Tomcat Versions:";
@@ -103,14 +118,15 @@ sub list {
 }
 
 sub ping {
-    my ($url) = @_;
-    my $res = HTTP::Tiny->new(timeout => 1)->get($url);
+    my ($host, $port, $time) = @_;
+    my $url = "http://$host:$port";
+    my $res = HTTP::Tiny->new(timeout => $time)->get($url);
     if ( $res->{success} ) {
         say "An HTTP server is up at $url";
         return 0;
     }
     else {
-        say "Tomcat is not up.";
+        say "Timed out after $time seconds when testing $url.";
         return 1;
     }
 }
@@ -159,25 +175,37 @@ sub install {
 
 sub help {
     say <<HELP;
-Usage: $0 [OPTIONS]
+Usage: $0 [COMMAND] [OPTIONS]
+
+  Commands:
+        help - display this message
+
+     install - install a version of tomcat
+
+        list - List installed versions
+
+        ping - test if tomcat is up
+
+          up - Startup tomcat server
+
+        down - Shutdown tomcat server
+
+     restart - Restart tomcat server
 
   Options:
      --version, -v VERSION
-        Specify a version to start
-     
-     --list, -l
-        List installed versions
+        Specify a version for up, down, restart
+        and install
 
-     --help, -h
+  Ping Options:
+     --port, -p PORT
+        Specify an HTTP port (8080 by default)
 
-     --startup, -up
-        Startup tomcat server
+     --host, -h HOST
+        Specify a network host (localhost by default)
 
-     --shutdown, -down
-        Shutdown tomcat server
-
-     --restart, -re
-        Restart tomcat server
+     --timeout, -t TIMEOUT
+        Specify timeout in seconds (1 second by default)
 
   returns 0 on success and 1 on failure
 HELP
