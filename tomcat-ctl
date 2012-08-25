@@ -1,11 +1,21 @@
 #!/usr/bin/env perl
 use v5.10;
+use HTTP::Tiny;
 use File::Spec;
+use Archive::Zip;
 use Getopt::Long;
+use File::Basename;
 use Data::Dump qw{ dump };
 
 my $VERSION = $ENV{TOMCAT_VERSION};
 my $HOME    = $ENV{HOME} // "$ENV{HOMEDRIVE}$ENV{HOMEPATH}";
+my $ROOT    = path($HOME => '.tomcat-ctl');
+my @MIRRORS = qw{
+    http://mirrors.gigenet.com/apache/tomcat
+    http://apache.tradebit.com/pub/tomcat
+};
+
+mkdir $ROOT unless -e $ROOT;
 
 GetOptions(
     'version=s'     => \$VERSION,
@@ -16,7 +26,7 @@ GetOptions(
     'restart|re'    => sub {      ctl(shutdown => $VERSION);
                              exit ctl(startup  => $VERSION) },
     'ping'          => sub { },
-    'install'       => sub { }
+    'install'       => sub { exit install($VERSION) }
 );
 
 error(\&help) unless @ARGV;
@@ -36,6 +46,20 @@ sub error {
     }
 
     exit 1;
+}
+
+sub parse_version {
+    split /\./ => $_[0];
+}
+
+sub extract {
+    my ($f, $dir) = @_;
+    say "Extracting...";
+    chdir $dir;
+    #say "$HOME/bin/7za e -o \"$dir\" \"$f\"";
+    my $dir = path($dir => basename($f, '.zip'));
+    system("$HOME/bin/7za e -y -o\"$dir\" $f");
+    say "ok";
 }
 
 #
@@ -78,6 +102,42 @@ sub list {
         glob "$HOME/local/apache-tomcat-*";
 
     return 0;
+}
+
+sub install {
+    my ($version) = @_;
+    my @v         = parse_version($version);
+    my $major     = $v[0];
+
+    my @urls = map {
+        "$_/tomcat-$major/v$version/bin/apache-tomcat-$version.zip";
+    } @MIRRORS;
+
+    my $dir = path($ROOT => 'work');
+    mkdir $dir unless -e $dir;
+
+    say "Downloading...";
+
+    my $t = HTTP::Tiny->new;
+    for my $url (@urls) {
+        my $f = path($dir => basename $url);
+
+        if ( -e $f ) { extract($f => $dir) }
+        else {
+            my $res = $t->get($url);
+            if ( $res->{success} ) {
+                open my $fh, '>', $f or die "can't write to $f";
+                binmode $fh;
+                print $fh $res->{content};
+                say "ok - downloaded to $f";
+            }
+
+            extract($f => $dir) if -e $f;
+        }
+
+    }
+
+    return 1;
 }
 
 sub help {
