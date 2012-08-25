@@ -55,8 +55,7 @@ sub parse_version {
 sub extract {
     my ($f, $dir) = @_;
     say "Extracting...";
-    my $dir = path($dir => basename($f, '.zip'));
-    system "$HOME/bin/7za e -y -o\"$dir\" $f";
+    system "$HOME/bin/7za x -y -o\"$dir\" $f";
     say "ok";
     return 0;
 }
@@ -105,7 +104,7 @@ sub list {
 
 sub ping {
     my ($url) = @_;
-    my $res = HTTP::Tiny->new(timeout => 10)->get($url);
+    my $res = HTTP::Tiny->new(timeout => 1)->get($url);
     if ( $res->{success} ) {
         say "An HTTP server is up at $url";
         return 0;
