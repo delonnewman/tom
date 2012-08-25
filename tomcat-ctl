@@ -86,7 +86,7 @@ sub plural {
     if ( $n == 1 ) { "$n $str" }
     else {
         if ( $str =~ /[sz]$/i ) { "$n ${str}es" }
-        else                     { "$n ${str}s"  }
+        else                    { "$n ${str}s"  }
     }
 }
 
