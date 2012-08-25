@@ -56,7 +56,7 @@ sub extract {
     my ($f, $dir) = @_;
     say "Extracting...";
     my $dir = path($dir => basename($f, '.zip'));
-    system("$HOME/bin/7za e -y -o\"$dir\" $f");
+    system "$HOME/bin/7za e -y -o\"$dir\" $f";
     say "ok";
     return 0;
 }
