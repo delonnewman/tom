@@ -82,12 +82,12 @@ sub extract {
 }
 
 sub plural {
-	my ($n, $str) = @_;
-	if ( $n == 1 ) { "$n $str" }
-	else {
-		if ( $str =~ /(s|z)$/i ) { "$n ${str}es" }
-		else                     { "$n ${str}s"  }
-	}
+    my ($n, $str) = @_;
+    if ( $n == 1 ) { "$n $str" }
+    else {
+        if ( $str =~ /(s|z)$/i ) { "$n ${str}es" }
+        else                     { "$n ${str}s"  }
+    }
 }
 
 #
