@@ -212,3 +212,24 @@ HELP
 
     exit 0;
 }
+
+__END__
+
+=head1 NAME
+
+    tomcat-ctl - Control tomcat from the command line with simplicity
+
+=head1 SYNOPSIS
+
+    > tomcat-ctl install -v 5.5.35
+    > tomcat-ctl list
+    > tomcat-ctl up -v 5.5.35
+    > tomcat-ctl down
+    > tomcat-ctl restart
+    > tomcat-ctl ping
+
+=head1 AUTHOR
+
+    Delon Newman <delon.newman@gmail.com>
+
+=cut
