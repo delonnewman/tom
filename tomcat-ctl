@@ -11,7 +11,7 @@ use Data::Dump qw{ dump };
 my $VERSION = $ENV{TOMCAT_VERSION};
 my $HOME    = $ENV{HOME} // "$ENV{HOMEDRIVE}$ENV{HOMEPATH}";
 my $ROOT    = path($HOME => '.tomcat-ctl');
-my $INSTALL = path($HOME => 'local');
+my $INSTALL = path($HOME => '.local');
 my @MIRRORS = qw{
     http://mirrors.gigenet.com/apache/tomcat
     http://apache.tradebit.com/pub/tomcat
@@ -28,7 +28,7 @@ GetOptions(
     'version=s' => \$VERSION,
     'host=s'    => \$HOST,
     'port=s'    => \$PORT,
-    'timeout=s' => \$TIMEOUT
+    'timeout=i' => \$TIMEOUT
 );
 
 commands(
@@ -64,9 +64,13 @@ sub error {
 
 sub commands {
     my %cmds = @_;
-    my $cmd = shift @ARGV;
-    if ( $cmds{$cmd} ) { $cmds{$cmd}->() }
-    else               { error(\&help => "'$cmd' is an invalid command") }
+    my $cmd  = shift @ARGV;
+
+    if ( $cmd && $cmds{$cmd} ) { $cmds{$cmd}->() }
+    else {
+        $cmd = '' unless defined $cmd;
+        error(\&help => "'$cmd' is an invalid command");
+    }
 }
 
 sub parse_version {
@@ -76,9 +80,25 @@ sub parse_version {
 sub extract {
     my ($f, $dir) = @_;
     say "Extracting...";
-    system "$HOME/bin/7za x -y -o\"$dir\" $f";
-    say "ok";
+    if ( $^O =~ /win32/i ) {
+        system "$HOME/bin/7za x -y -o\"$dir\" $f";
+        say "ok";
+    }
+    else {
+        chdir $dir;
+        system "tar zxvf $f";
+        say "ok"
+    }
     return 0;
+}
+
+sub plural {
+    my ($n, $str) = @_;
+    if ( $n == 1 ) { "$n $str" }
+    else {
+        if ( $str =~ /[sz]$/i ) { "$n ${str}es" }
+        else                    { "$n ${str}s"  }
+    }
 }
 
 #
@@ -126,18 +146,23 @@ sub ping {
         return 0;
     }
     else {
-        say "Timed out after $time seconds when testing $url.";
+        say "Timed out after ", plural($time => "second"), " when testing $url.";
         return 1;
     }
 }
 
 sub install {
     my ($version) = @_;
+
+    error(\&help => 'A version must be specified') unless $version;
+
     my @v         = parse_version($version);
     my $major     = $v[0];
 
     my @urls = map {
-        "$_/tomcat-$major/v$version/bin/apache-tomcat-$version.zip";
+        my $path = "$_/tomcat-$major/v$version/bin";
+        if ( $^O =~ /win32/i ) { "$path/apache-tomcat-$version.zip" }
+        else                   { "$path/apache-tomcat-$version.tar.gz" }
     } @MIRRORS;
 
     my $install = path($INSTALL => "apache-tomcat-$version");
@@ -155,7 +180,11 @@ sub install {
         for my $url (@urls) {
             my $f = path($work => basename $url);
 
-            if ( -e $f ) { return extract($f => $INSTALL) }
+            if ( -e $f ) {
+                my $r = extract($f => $INSTALL);
+                say "Installed Tomcat version $version.";
+                return $r;
+            }
             else {
                 my $res = $t->get($url);
                 if ( $res->{success} ) {
@@ -165,9 +194,13 @@ sub install {
                     say "ok - downloaded to $f";
                 }
 
-                return extract($f => $INSTALL) if -e $f;
+                my $r = extract($f => $INSTALL) if -e $f;
+                say "Installed Tomcat version $version.";
+                return $r;
             }
         }
+
+        say "Can't find Tomcat version $version.";
     }
 
     return 1;
