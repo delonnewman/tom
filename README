@@ -9,6 +9,18 @@ SYNOPSIS
         > tomcat-ctl restart
         > tomcat-ctl ping
 
+REQUIREMENTS
+  General
+        perl 5.10 or greater
+        HTTP::Tiny
+
+  Windows
+        7za (the command line version of 7zip) installed in C:\Users\[USERNAME]\bin
+        for install command
+
+  Unix
+        GNU tar (on PATH) for install command
+
 AUTHOR
         Delon Newman <delon.newman@gmail.com>
 

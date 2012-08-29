@@ -266,6 +266,22 @@ __END__
     > tomcat-ctl restart
     > tomcat-ctl ping
 
+=head1 REQUIREMENTS
+
+=head2 General
+
+    perl 5.10 or greater
+    HTTP::Tiny
+
+=head2 Windows
+
+    7za (the command line version of 7zip) installed in C:\Users\[USERNAME]\bin
+    for install command
+
+=head2 Unix
+
+    GNU tar (on PATH) for install command
+
 =head1 AUTHOR
 
     Delon Newman <delon.newman@gmail.com>

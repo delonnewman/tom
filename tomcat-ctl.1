@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "TOMCAT-CTL 1"
-.TH TOMCAT-CTL 1 "2012-08-24" "perl v5.14.2" "tomcat-ctl"
+.TH TOMCAT-CTL 1 "2012-08-29" "perl v5.14.2" "tomcat-ctl"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -142,6 +142,25 @@
 \&    > tomcat\-ctl down
 \&    > tomcat\-ctl restart
 \&    > tomcat\-ctl ping
+.Ve
+.SH "REQUIREMENTS"
+.IX Header "REQUIREMENTS"
+.SS "General"
+.IX Subsection "General"
+.Vb 2
+\&    perl 5.10 or greater
+\&    HTTP::Tiny
+.Ve
+.SS "Windows"
+.IX Subsection "Windows"
+.Vb 2
+\&    7za (the command line version of 7zip) installed in C:\eUsers\e[USERNAME]\ebin
+\&    for install command
+.Ve
+.SS "Unix"
+.IX Subsection "Unix"
+.Vb 1
+\&    GNU tar (on PATH) for install command
 .Ve
 .SH "AUTHOR"
 .IX Header "AUTHOR"
