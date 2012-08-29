@@ -69,7 +69,12 @@ sub commands {
     if ( $cmd && $cmds{$cmd} ) { $cmds{$cmd}->() }
     else {
         $cmd = '' unless defined $cmd;
-        error(\&help => "'$cmd' is an invalid command");
+        if ( $cmd ) {
+            error(\&help => "'$cmd' is an invalid command");
+        }
+        else {
+            error(\&help);
+        }
     }
 }
 
