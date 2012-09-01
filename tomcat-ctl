@@ -8,9 +8,10 @@ use Getopt::Long;
 use File::Basename;
 use Data::Dump qw{ dump };
 
-my $VERSION = $ENV{TOMCAT_VERSION};
 my $HOME    = $ENV{HOME} // "$ENV{HOMEDRIVE}$ENV{HOMEPATH}";
 my $ROOT    = path($HOME => '.tomcat-ctl');
+write_to(path($ROOT => 'version') => '') unless -e path($ROOT => 'version');
+my $VERSION = slurp(path($ROOT => 'version')); #$ENV{TOMCAT_VERSION};
 my $INSTALL = path($HOME => '.local');
 my @MIRRORS = qw{
     http://mirrors.gigenet.com/apache/tomcat
@@ -38,6 +39,7 @@ commands(
     ping    => sub { exit ping($HOST => $PORT, $TIMEOUT) },
     up      => sub { exit ctl(startup  => $VERSION) },
     down    => sub { exit ctl(shutdown => $VERSION) },
+    version => sub { exit default_version($ARGV[0]) },
     restart => sub {      ctl(shutdown => $VERSION);
                      exit ctl(startup  => $VERSION) }
 );
@@ -80,6 +82,25 @@ sub commands {
 
 sub parse_version {
     split /\./ => $_[0];
+}
+
+sub get_versions {
+    map { /(\d\.\d(?:\.\d\d)?)/g; $1 }
+    glob "$INSTALL/apache-tomcat-*";
+}
+
+sub slurp {
+    my ($file) = @_;
+    open my $fh, '<', $file or die "can't read $file";
+    local $/='';
+    <$fh>;
+}
+
+sub write_to {
+    my ($file, $content) = @_;
+    open my $fh, '>', $file or die "can't write to $file";
+    print $fh $content;
+    $content;
 }
 
 sub extract {
@@ -154,6 +175,26 @@ sub ping {
         say "Timed out after ", plural($time => "second"), " when testing $url.";
         return 1;
     }
+}
+
+sub default_version {
+    my ($version) = @_;
+
+    my @versions = grep { /^$version/ } get_versions;
+    if ( @versions == 1 ) {
+        write_to "$ROOT/version" => $versions[0];
+        say "Default version set to $versions[0]";
+    }
+    elsif ( @versions < 1 ) {
+        say "Version $version is not installed, use the install command to install it";
+        return 1;
+    }
+    else {
+        say "Which version?";
+        say for @versions;
+    }
+
+    return 0;
 }
 
 sub install {
