@@ -10,9 +10,12 @@ use Data::Dump qw{ dump };
 
 my $HOME    = $ENV{HOME} // "$ENV{HOMEDRIVE}$ENV{HOMEPATH}";
 my $ROOT    = path($HOME => '.tomcat-ctl');
-write_to(path($ROOT => 'version') => '') unless -e path($ROOT => 'version');
-my $VERSION = slurp(path($ROOT => 'version')); #$ENV{TOMCAT_VERSION};
 my $INSTALL = path($HOME => '.local');
+my $VFILE   = path($ROOT => 'version');
+my $VERSION = do {
+    write_to($VFILE => '') unless -e $VFILE;
+    slurp($VFILE);
+};
 my @MIRRORS = qw{
     http://mirrors.gigenet.com/apache/tomcat
     http://apache.tradebit.com/pub/tomcat
@@ -44,11 +47,11 @@ commands(
                      exit ctl(startup  => $VERSION) }
 );
 
-
 error(\&help) unless @ARGV;
 
 #
 # Functions
+#
 
 sub path { File::Spec->join(@_) }
 
@@ -129,6 +132,8 @@ sub plural {
 
 #
 # Commands
+#
+
 sub ctl {
     my ($cmd, $version) = @_;
 
@@ -257,13 +262,15 @@ sub help {
 Usage: $0 [COMMAND] [OPTIONS]
 
   Commands:
-        help - display this message
+        help - Display this message
 
-     install - install a version of tomcat
+     install - Install a version of tomcat
 
         list - List installed versions
 
-        ping - test if tomcat is up
+     version - Set default version
+
+        ping - Test if tomcat is up
 
           up - Startup tomcat server
 
