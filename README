@@ -1,13 +1,14 @@
 NAME
-        tomcat-ctl - Control tomcat from the command line with simplicity
+        tom - Control tomcat from the command line with simplicity
 
 SYNOPSIS
-        > tomcat-ctl install -v 5.5.35
-        > tomcat-ctl list
-        > tomcat-ctl up -v 5.5.35
-        > tomcat-ctl down
-        > tomcat-ctl restart
-        > tomcat-ctl ping
+        > tom install 5.5.35
+        > tom list
+        > tom up 5.5.35
+        > tom down
+        > tom restart
+        > tom ping
+        > tom version 6.0.35
 
 REQUIREMENTS
   General
