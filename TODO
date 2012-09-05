@@ -1,0 +1,3 @@
+- Add ability to specify port for "up" command
+- Add "available" command for listing tomcat versions that are available for install
+- Improve installation especially for Windows

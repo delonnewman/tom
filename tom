@@ -213,6 +213,12 @@ sub default_version {
     return 0;
 }
 
+sub available {
+    for my $url (@MIRRORS) {
+
+    }
+}
+
 sub install {
     my ($version) = @_;
 
