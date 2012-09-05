@@ -1,7 +1,7 @@
 .PHONY: all install uninstall doc build build-deps clean_doc install-deps
 
 # files
-BIN=tomcat-ctl
+BIN=tom
 MAN=$(BIN).1
 
 # dirs

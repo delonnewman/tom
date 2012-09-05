@@ -9,10 +9,14 @@ use File::Basename;
 use Data::Dump qw{ dump };
 
 my $HOME    = $ENV{HOME} // "$ENV{HOMEDRIVE}$ENV{HOMEPATH}";
-my $ROOT    = path($HOME => '.tomcat-ctl');
+my $ROOT    = do {
+    my $r = path($HOME => '.tom');
+    mkdir $r unless -e $r;
+    $r;
+};
 my $INSTALL = path($HOME => '.local');
 my $VFILE   = path($ROOT => 'version');
-my $VERSION = do {
+my $VERSION = $ARGV[1] // do {
     write_to($VFILE => '') unless -e $VFILE;
     slurp($VFILE);
 };
@@ -26,10 +30,8 @@ my $HOST    = 'localhost';
 my $PORT    = '8080';
 my $TIMEOUT = 1;
 
-mkdir $ROOT unless -e $ROOT;
 
 GetOptions(
-    'version=s' => \$VERSION,
     'host=s'    => \$HOST,
     'port=s'    => \$PORT,
     'timeout=i' => \$TIMEOUT
@@ -42,9 +44,8 @@ commands(
     ping    => sub { exit ping($HOST => $PORT, $TIMEOUT) },
     up      => sub { exit ctl(startup  => $VERSION) },
     down    => sub { exit ctl(shutdown => $VERSION) },
-    version => sub { exit default_version($ARGV[0]) },
-    restart => sub {      ctl(shutdown => $VERSION);
-                     exit ctl(startup  => $VERSION) }
+    version => sub { exit default_version($VERSION) },
+    restart => sub { exit restart($VERSION) }
 );
 
 error(\&help) unless @ARGV;
@@ -138,7 +139,7 @@ sub ctl {
     my ($cmd, $version) = @_;
 
     my $ext = $^O =~ /win32/i ? '.bat' : '.sh';
-    my $root = path($HOME => local => "apache-tomcat-$version");
+    my $root = path($INSTALL => "apache-tomcat-$version");
     my $bin  = path($root => bin => "${cmd}${ext}");
 
     $ENV{CATALINA_HOME} = $root; # for windows scripts
@@ -155,6 +156,16 @@ sub ctl {
     else {
         say STDERR "'$bin' doesn't exist";
         return 1;
+    }
+}
+
+sub restart {
+    my ($version) = @_;
+
+    if ( ping($HOST => $PORT, $TIMEOUT) == 1 ) { ctl(startup => $VERSION) }
+    else {
+        ctl(shutdown => $VERSION);
+        ctl(startup  => $VERSION);
     }
 }
 
@@ -278,11 +289,6 @@ Usage: $0 [COMMAND] [OPTIONS]
 
      restart - Restart tomcat server
 
-  Options:
-     --version, -v VERSION
-        Specify a version for up, down, restart
-        and install
-
   Ping Options:
      --port, -p PORT
         Specify an HTTP port (8080 by default)
@@ -303,16 +309,17 @@ __END__
 
 =head1 NAME
 
-    tomcat-ctl - Control tomcat from the command line with simplicity
+    tom - Control tomcat from the command line with simplicity
 
 =head1 SYNOPSIS
 
-    > tomcat-ctl install -v 5.5.35
-    > tomcat-ctl list
-    > tomcat-ctl up -v 5.5.35
-    > tomcat-ctl down
-    > tomcat-ctl restart
-    > tomcat-ctl ping
+    > tom install 5.5.35
+    > tom list
+    > tom up 5.5.35
+    > tom down
+    > tom restart
+    > tom ping
+    > tom version 6.0.35
 
 =head1 REQUIREMENTS
 
