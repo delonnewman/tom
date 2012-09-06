@@ -1,0 +1,9 @@
+cpanm (App::cpanminus) 1.5017 on perl 5.016001 built for MSWin32-x86-multi-thread
+Work directory is C:\Users\V408344\Projects\Personal\tomcat-ctl\local\perl\data/.cpanm/work/1346959857.7712
+You have make C:\Users\V408344\Projects\Personal\tomcat-ctl\local\perl\c\bin\dmake.exe
+You have LWP 6.04
+Falling back to Archive::Tar 1.88
+Searching HTTP::Tiny on cpanmetadb ...
+-> FAIL Finding HTTP::Tiny on cpanmetadb failed.
+Searching HTTP::Tiny on search.cpan.org ...
+HTTP::Tiny is up to date. (0.022)
