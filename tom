@@ -137,6 +137,12 @@ sub plural {
 
 sub ctl {
     my ($cmd, $version) = @_;
+    $version // error(\&list, "Must specify version or set a default version");
+
+    if ( $cmd eq 'shutdown' && ping($HOST => $PORT, $TIMEOUT) == 1 ) {
+        say "Tomcat doesn't appear to be running.";
+        return 0;
+    }
 
     my $ext = $^O =~ /win32/i ? '.bat' : '.sh';
     my $root = path($INSTALL => "apache-tomcat-$version");
