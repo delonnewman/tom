@@ -177,10 +177,20 @@ sub restart {
 
 sub list {
     my ($version) = @_;
-    say "Installed Tomcat Versions:";
-    say for map { $version && /$version/ ? "$_ * default " : $_ }
+    my @versions =
+        map { $version && /$version/ ? "$_ * default " : $_ }
         map { /(\d\.\d(?:\.\d\d)?)/g; $1 }
         glob "$INSTALL/apache-tomcat-*";
+
+    if ( @versions ) {
+        say "Installed Tomcat Versions:";
+        say for @versions;
+    }
+    else {
+        say "There doesn't appear to be any installed versions of Tomcat.\n",
+            "Try using the 'install' command.";
+        return 1;
+    }
 
     return 0;
 }
