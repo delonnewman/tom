@@ -38,14 +38,15 @@ GetOptions(
 );
 
 commands(
-    help    => \&help,
-    install => sub { exit install($VERSION) },
-    list    => sub { exit list($VERSION) },
-    ping    => sub { exit ping($HOST => $PORT, $TIMEOUT) },
-    up      => sub { exit ctl(startup  => $VERSION) },
-    down    => sub { exit ctl(shutdown => $VERSION) },
-    version => sub { exit default_version($VERSION) },
-    restart => sub { exit restart($VERSION) }
+    help      => \&help,
+    install   => sub { exit install($VERSION) },
+    uninstall => sub { exit uninstall($VERSION) },
+    list      => sub { exit list($VERSION) },
+    ping      => sub { exit ping($HOST => $PORT, $TIMEOUT) },
+    up        => sub { exit ctl(startup  => $VERSION) },
+    down      => sub { exit ctl(shutdown => $VERSION) },
+    version   => sub { exit default_version($VERSION) },
+    restart   => sub { exit restart($VERSION) }
 );
 
 error(\&help) unless @ARGV;
@@ -111,7 +112,7 @@ sub extract {
     my ($f, $dir) = @_;
     say "Extracting...";
     if ( $^O =~ /win32/i ) {
-        system "$HOME/bin/7za x -y -o\"$dir\" $f";
+        system "./local/7zip/7za x -y -o\"$dir\" $f";
         say "ok";
     }
     else {
@@ -214,7 +215,7 @@ sub default_version {
 
     my @versions = grep { /^$version/ } get_versions;
     if ( @versions == 1 ) {
-        write_to "$ROOT/version" => $versions[0];
+        write_to $VFILE => $versions[0];
         say "Default version set to $versions[0]";
     }
     elsif ( @versions < 1 ) {
@@ -235,6 +236,36 @@ sub available {
     }
 }
 
+sub uninstall {
+    my ($version) = @_;
+
+    error(\&list => 'A version must be specified') unless $version;
+    
+    my $install = path($INSTALL => "apache-tomcat-$version");
+    if ( -e $install ) {
+        if ( $^O =~ /win32/i ) { system "cmd.exe /K \"rmdir /S /Q $install && exit\"" }
+        else {
+            unlink $install or error(undef, $!);
+        }
+
+        my $v = slurp($VFILE);
+        if ( $v eq $version ) {
+            if ( my @vs = get_versions() ) {
+                write_to $VFILE => $vs[0];
+            }
+            else {
+                write_to $VFILE => '';
+            }
+        }
+
+        say "Tomcat $version has been removed";
+        return 0;
+    }
+    else {
+        error(\&list => "Tomcat $version does not apear to be installed");
+    }
+}
+
 sub install {
     my ($version) = @_;
 
@@ -252,7 +283,7 @@ sub install {
     my $install = path($INSTALL => "apache-tomcat-$version");
     if ( -e $install ) {
         say "Tomcat version $version is already installed at $install";
-        return 0
+        return 0;
     }
     else {
         my $work = path($ROOT => 'work');
@@ -264,6 +295,7 @@ sub install {
         for my $url (@urls) {
             my $f = path($work => basename $url);
 
+            say $f;
             if ( -e $f ) {
                 my $r = extract($f => $INSTALL);
                 say "Installed Tomcat version $version.";
@@ -278,16 +310,17 @@ sub install {
                     say "ok - downloaded to $f";
                 }
 
-                my $r = extract($f => $INSTALL) if -e $f;
-                say "Installed Tomcat version $version.";
-                return $r;
+                if ( -e $f ) {
+                    my $r = extract($f => $INSTALL);
+                    say "Installed Tomcat version $version.";
+                    return $r;
+                }
             }
         }
 
         say "Can't find Tomcat version $version.";
+        return 1;
     }
-
-    return 1;
 }
 
 sub help {

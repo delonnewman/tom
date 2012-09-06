@@ -15,7 +15,5 @@ set PERL5OPT=
 set PERL_MM_OPT=
 set PERL_MB_OPT=
 
-if not #%1# == ## "%drivep%\perl\bin\perl.exe" %* & goto END
+rem if not #%1# == ## "%drivep%\perl\bin\perl.exe" %* & goto END
 perl %drivep%\tom %*
-
-:END
