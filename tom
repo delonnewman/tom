@@ -330,21 +330,23 @@ Usage: $0 [COMMAND] [OPTIONS]
   Commands:
         help - Display this message
 
-     install - Install a version of tomcat
+     install - Install a version of Tomcat
+
+   uninstall - Uninstall a version of Tomcat
 
         list - List installed versions
 
      version - Set default version
 
-        ping - Test if tomcat is up
+        ping - Test if Tomcat is up
 
-          up - Startup tomcat server
+          up - Startup Tomcat server
 
-        down - Shutdown tomcat server
+        down - Shutdown Tomcat server
 
-     restart - Restart tomcat server
+     restart - Restart Tomcat server
 
-  Ping Options:
+  Options:
      --port, -p PORT
         Specify an HTTP port (8080 by default)
 
@@ -375,6 +377,7 @@ __END__
     > tom restart
     > tom ping
     > tom version 6.0.35
+    > tom uninstall 5.5.35
 
 =head1 REQUIREMENTS
 
