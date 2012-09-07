@@ -231,8 +231,7 @@ sub list {
     my ($version) = @_;
     my @versions =
         map { $version && /$version/ ? "$_ * default " : $_ }
-        map { /(\d\.\d(?:\.\d\d)?)/g; $1 }
-        glob "$INSTALL/apache-tomcat-*";
+        get_versions;
 
     if ( @versions ) {
         say "Installed Tomcat versions:";
