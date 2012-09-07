@@ -31,7 +31,6 @@ my $HOST    = 'localhost';
 my $PORT    = '8080';
 my $TIMEOUT = 1;
 
-
 GetOptions(
     'host=s'    => \$HOST,
     'port=s'    => \$PORT,
@@ -150,14 +149,12 @@ sub plural {
 sub first(&@) {
     my ($fn, @list) = @_;
     for my $x (@list) {
-        if ( !!$fn->($x) ) {
-            return $x
-        }
+        return $x if !!$fn->($x);
     }
-
     return undef;
 }
 
+# Yes, for a monkey!!
 sub Mojo::Collection::to_a {
     my ($self) = @_;
     @$self;
