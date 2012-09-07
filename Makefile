@@ -15,7 +15,23 @@ PERL_DEV_DEPS=
 
 all: build-deps
 
-build: build/ build/$(BIN) build/$(BIN).bat build/$(MAN) build/README
+package: tom.zip
+
+tom.zip: build-win32
+	zip tom.zip -rf build/*
+
+build: build/ build/$(BIN) build/$(MAN) build/README
+
+build-win32: clean-code build build/$(BIN).bat build/7zip build/perl build/install.bat
+
+build/install.bat:
+	cp scripts/install.bat build/
+
+build/7zip:
+	unzip -o extra/7za920.zip -d build/7zip
+
+build/perl:
+	unzip -o extra/perl -d build/
 
 build/:
 	mkdir build
@@ -60,3 +76,8 @@ $(BIN).1:
 
 clean:
 	rm -rf build
+
+clean-code:
+	rm build/tom
+	rm build/tom.bat
+	rm build/install.bat

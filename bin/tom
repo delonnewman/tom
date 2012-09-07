@@ -17,10 +17,6 @@ my $ROOT    = do {
 };
 my $INSTALL = path($HOME => '.local');
 my $VFILE   = path($ROOT => 'version');
-my $VERSION = $ARGV[1] // do {
-    write_to($VFILE => '') unless -e $VFILE;
-    slurp($VFILE);
-};
 my @MIRRORS = qw{
     http://mirrors.gigenet.com/apache/tomcat
     http://apache.tradebit.com/pub/tomcat
@@ -29,13 +25,19 @@ my @MIRRORS = qw{
 # ping defaults
 my $HOST    = 'localhost';
 my $PORT    = '8080';
-my $TIMEOUT = 1;
+my $TIMEOUT = 2;
 
 GetOptions(
     'host=s'    => \$HOST,
     'port=s'    => \$PORT,
     'timeout=i' => \$TIMEOUT
 );
+
+# Grab second arg after parsing flags
+my $VERSION = $ARGV[1] // do {
+    write_to($VFILE => '') unless -e $VFILE;
+    slurp($VFILE);
+};
 
 commands(
     help      => \&help,
@@ -95,6 +97,26 @@ sub get_versions {
     glob "$INSTALL/apache-tomcat-*";
 }
 
+sub select_version($$) {
+    my ($version, $fn) = @_;
+
+    my @versions = grep { /^$version/ } get_versions;
+    if ( @versions == 1 ) {
+        return $fn->($versions[0]);
+    }
+    elsif ( @versions < 1 ) {
+        say "Version $version is not installed, use the install command to install it";
+        return 1;
+    }
+    else {
+        say "Which version?";
+        say for @versions;
+        return 1;
+    }
+
+    undef;
+}
+
 sub slurp {
     my ($file) = @_;
     open my $fh, '<', $file or die "can't read $file";
@@ -113,8 +135,16 @@ sub extract {
     my ($f, $dir) = @_;
     say "Extracting...";
     if ( $^O =~ /win32/i ) {
-        system ".\\7zip\\7za x -y -o\"$dir\" $f";
-        say "ok";
+        my $d = dirname __FILE__;
+        my $z = "$d\\7zip\\7za.exe";
+        if ( -e $z ) {
+            system "\"$z\" x -y -o\"$dir\" $f";
+            say "ok";
+        }
+        else {
+            say "Can't find 7zip at '$z'";
+            return 1;
+        }
     }
     else {
         chdir $dir;
@@ -183,6 +213,26 @@ sub get_available {
     }
 }
 
+sub select_available($$) {
+    my ($version, $fn) = @_;
+
+    my @versions = grep { /^$version/ } get_available;
+    if ( @versions == 1 ) {
+        return $fn->($versions[0]);
+    }
+    elsif ( @versions < 1 ) {
+        say "Version $version is not installed, use the install command to install it";
+        return 1;
+    }
+    else {
+        say "Which version?";
+        say for @versions;
+        return 1;
+    }
+
+    undef;
+}
+
 #
 # Commands
 #
@@ -196,25 +246,33 @@ sub ctl {
         return 0;
     }
 
-    my $ext = $^O =~ /win32/i ? '.bat' : '.sh';
-    my $root = path($INSTALL => "apache-tomcat-$version");
-    my $bin  = path($root => bin => "${cmd}${ext}");
-
-    $ENV{CATALINA_HOME} = $root; # for windows scripts
-
-    error(\&help => "must specify version") unless $version;
-
-    if ( -e $bin ) {
-        say "$cmd: Tomcat $version...";
-        say "running '$bin'";
-        system $bin;
-        say "DONE.";
+    if ( $cmd eq 'startup' && ping($HOST => $PORT, $TIMEOUT) == 0 ) {
+        say "Tomcat is already up.";
         return 0;
     }
-    else {
-        say STDERR "'$bin' doesn't exist";
-        return 1;
-    }
+
+    select_version $version => sub {
+        my ($v) = @_;
+        my $ext = $^O =~ /win32/i ? '.bat' : '.sh';
+        my $root = path($INSTALL => "apache-tomcat-$v");
+        my $bin  = path($root => bin => "${cmd}${ext}");
+    
+        $ENV{CATALINA_HOME} = $root; # for windows scripts
+    
+        error(\&help => "must specify version") unless $v;
+    
+        if ( -e $bin ) {
+            say "$cmd: Tomcat $v...";
+            say "running '$bin'";
+            system $bin;
+            say "DONE.";
+            return 0;
+        }
+        else {
+            say STDERR "'$bin' doesn't exist";
+            return 1;
+        }
+    };
 }
 
 sub restart {
@@ -263,21 +321,12 @@ sub ping {
 sub default_version {
     my ($version) = @_;
 
-    my @versions = grep { /^$version/ } get_versions;
-    if ( @versions == 1 ) {
-        write_to $VFILE => $versions[0];
-        say "Default version set to $versions[0]";
-    }
-    elsif ( @versions < 1 ) {
-        say "Version $version is not installed, use the install command to install it";
-        return 1;
-    }
-    else {
-        say "Which version?";
-        say for @versions;
-    }
-
-    return 0;
+    select_version $version => sub {
+        my ($v) = @_;
+        write_to $VFILE => $v;
+        say "Default version set to $v";
+        return 0;
+    };
 }
 
 sub available {
@@ -299,90 +348,96 @@ sub available {
 }
 
 sub uninstall {
-    my ($version) = @_;
+    my ($pattern) = @_;
 
-    error(\&list => 'A version must be specified') unless $version;
+    error(\&list => 'A version must be specified') unless $pattern;
     
-    my $install = path($INSTALL => "apache-tomcat-$version");
-    if ( -e $install ) {
-        if ( $^O =~ /win32/i ) { system "cmd.exe /K \"rmdir /S /Q $install && exit\"" }
-        else {
-            unlink $install or error(undef, $!);
-        }
-
-        my $v = slurp($VFILE);
-        if ( $v eq $version ) {
-            if ( my @vs = get_versions() ) {
-                write_to $VFILE => $vs[0];
-            }
+    select_version $pattern => sub {
+        my ($version) = @_;
+        my $install = path($INSTALL => "apache-tomcat-$version");
+        if ( -e $install ) {
+            if ( $^O =~ /win32/i ) { system "cmd.exe /K \"rmdir /S /Q $install && exit\"" }
             else {
-                write_to $VFILE => '';
+                unlink $install or error(undef, $!);
             }
+    
+            my $v = slurp($VFILE);
+            if ( $v eq $version ) {
+                if ( my @vs = get_versions() ) {
+                    write_to $VFILE => $vs[0];
+                }
+                else {
+                    write_to $VFILE => '';
+                }
+            }
+    
+            say "Tomcat $version has been removed";
+            return 0;
         }
-
-        say "Tomcat $version has been removed";
-        return 0;
-    }
-    else {
-        error(\&list => "Tomcat $version does not apear to be installed");
-    }
+        else {
+            error(\&list => "Tomcat $version does not apear to be installed");
+        }
+    };
 }
 
 sub install {
-    my ($version) = @_;
+    my ($pattern) = @_;
 
-    error(\&help => 'A version must be specified') unless $version;
+    error(\&help => 'A version must be specified') unless $pattern;
 
-    my @v         = parse_version($version);
-    my $major     = $v[0];
-
-    my @urls = map {
-        my $path = "$_/tomcat-$major/v$version/bin";
-        if ( $^O =~ /win32/i ) { "$path/apache-tomcat-$version.zip" }
-        else                   { "$path/apache-tomcat-$version.tar.gz" }
-    } @MIRRORS;
-
-    my $install = path($INSTALL => "apache-tomcat-$version");
-    if ( -e $install ) {
-        say "Tomcat version $version is already installed at $install";
-        return 0;
-    }
-    else {
-        my $work = path($ROOT => 'work');
-        mkdir $work unless -e $work;
-
-        say "Downloading...";
-
-        my $t = HTTP::Tiny->new;
-        for my $url (@urls) {
-            my $f = path($work => basename $url);
-
-            say $f;
-            if ( -e $f ) {
-                my $r = extract($f => $INSTALL);
-                say "Installed Tomcat version $version.";
-                return $r;
-            }
-            else {
-                my $res = $t->get($url);
-                if ( $res->{success} ) {
-                    open my $fh, '>', $f or die "can't write to $f";
-                    binmode $fh;
-                    print $fh $res->{content};
-                    say "ok - downloaded to $f";
-                }
-
+    select_available $pattern => sub {
+        my ($version) = @_;
+        my @v         = parse_version($version);
+        my $major     = $v[0];
+    
+        my @urls = map {
+            my $path = "$_/tomcat-$major/v$version/bin";
+            if ( $^O =~ /win32/i ) { "$path/apache-tomcat-$version.zip" }
+            else                   { "$path/apache-tomcat-$version.tar.gz" }
+        } @MIRRORS;
+    
+        my $install = path($INSTALL => "apache-tomcat-$version");
+        if ( -e $install ) {
+            say "Tomcat version $version is already installed at $install";
+            return 0;
+        }
+        else {
+            my $work = path($ROOT => 'work');
+            mkdir $work unless -e $work;
+    
+            say "Downloading...";
+    
+            my $t = HTTP::Tiny->new;
+            for my $url (@urls) {
+                my $f = path($work => basename $url);
+    
+                say $f;
                 if ( -e $f ) {
                     my $r = extract($f => $INSTALL);
                     say "Installed Tomcat version $version.";
                     return $r;
                 }
+                else {
+                    my $res = $t->get($url);
+                    if ( $res->{success} ) {
+                        open my $fh, '>', $f or die "can't write to $f";
+                        binmode $fh;
+                        print $fh $res->{content};
+                        say "ok - downloaded to $f";
+                    }
+    
+                    if ( -e $f ) {
+                        my $r = extract($f => $INSTALL);
+                        say "Installed Tomcat version $version.";
+                        return $r;
+                    }
+                }
             }
+    
+            say "Can't find Tomcat version $version.";
+            return 1;
         }
-
-        say "Can't find Tomcat version $version.";
-        return 1;
-    }
+    };
 }
 
 sub help {
@@ -418,7 +473,7 @@ Usage: $0 [COMMAND] [OPTIONS]
         Specify a network host (localhost by default)
 
      --timeout, -t TIMEOUT
-        Specify timeout in seconds (1 second by default)
+        Specify timeout in seconds (2 seconds by default)
 
   returns 0 on success and 1 on failure
 HELP
