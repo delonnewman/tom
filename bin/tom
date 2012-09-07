@@ -112,7 +112,7 @@ sub extract {
     my ($f, $dir) = @_;
     say "Extracting...";
     if ( $^O =~ /win32/i ) {
-        system "./local/7zip/7za x -y -o\"$dir\" $f";
+        system "./7zip/7za x -y -o\"$dir\" $f";
         say "ok";
     }
     else {

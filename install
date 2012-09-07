@@ -1,0 +1,33 @@
+#!/usr/bin/env perl
+use v5.10;
+use strict;
+use warnings;
+use Win32::TieRegistry;
+use ExtUtils::Install;
+
+my @FILES = qw{
+tom
+tom.bat
+README
+local
+};
+
+my $INSTALL = 'C:\\Program Files\\tom';
+say "==> Installing tom...";
+#my @files = glob '*';
+#for my $f (@files) {
+#    next if grep { $f =~ /$_/ } @IGNORE;
+#    my $d = -d $f ? "$INSTALL\\$f" : $INSTALL;
+#    say "Installing $f to $d";
+#    install({ $f => $d });
+#}
+mkdir 'build' unless -e 'build';
+install({ "./bin" => 'build' });    
+#install({});
+say "- ok.";
+
+say "==> Adding tom to system path...";
+my $key  = 'HKEY_CURRENT_USER\\Environment\\PATH';
+my $path = $Registry->{$key};
+$Registry->{$key} = "$path;$INSTALL";
+say "- DONE.";
