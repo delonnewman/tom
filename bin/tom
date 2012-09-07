@@ -7,6 +7,7 @@ use File::Spec;
 use Getopt::Long;
 use File::Basename;
 use Data::Dump qw{ dump };
+use Mojo::DOM;
 
 my $HOME    = $ENV{HOME} // "$ENV{HOMEDRIVE}$ENV{HOMEPATH}";
 my $ROOT    = do {
@@ -42,6 +43,7 @@ commands(
     install   => sub { exit install($VERSION) },
     uninstall => sub { exit uninstall($VERSION) },
     list      => sub { exit list($VERSION) },
+    available => sub { exit available($VERSION) },
     ping      => sub { exit ping($HOST => $PORT, $TIMEOUT) },
     up        => sub { exit ctl(startup  => $VERSION) },
     down      => sub { exit ctl(shutdown => $VERSION) },
@@ -129,6 +131,58 @@ sub plural {
     else {
         if ( $str =~ /[sz]$/i ) { "$n ${str}es" }
         else                    { "$n ${str}s"  }
+    }
+}
+
+{
+    my $t;
+    sub fetch($$) {
+        my ($url, $fn) = @_;
+        $t //= HTTP::Tiny->new;
+        my $res = HTTP::Tiny->new->get($url);
+        if ( !$res->{success} ) { return 1 }
+        else {
+            $fn->(Mojo::DOM->new($res->{content}), $res);
+        }
+    }
+}
+
+sub first(&@) {
+    my ($fn, @list) = @_;
+    for my $x (@list) {
+        if ( !!$fn->($x) ) {
+            return $x
+        }
+    }
+
+    return undef;
+}
+
+sub Mojo::Collection::to_a {
+    my ($self) = @_;
+    @$self;
+}
+
+sub get_available {
+    my $t   = HTTP::Tiny->new;
+    my $url = first { $t->get(@_)->{success} } @MIRRORS;
+    if ( !$url ) { error(undef, "Couldn't reach mirrors") }
+    else {
+        fetch($url => sub {
+            my ($dom) = @_;
+            $dom->find('a')
+                ->pluck('text')
+                ->grep(qr/tomcat-\d/)
+                ->map(sub {
+                    my ($l) = @_;
+                    fetch "$url/$l" => sub {
+                        my ($dom) = @_;
+                        $dom->find('a')
+                            ->pluck('text')
+                            ->grep(qr/v\d.\d.\d\d/);
+                    };
+                })->map(sub{ my ($x) = @_; @$x if ref $x });
+        })->map(sub{ my ($x) = @_; $x =~ s/v//; $x =~ s/\///; $x })->to_a;
     }
 }
 
@@ -231,9 +285,21 @@ sub default_version {
 }
 
 sub available {
-    for my $url (@MIRRORS) {
+    my ($version) = @_;
 
+    my @installed = get_versions;
+
+    say "Tomcat versions available for install:";
+    for my $v (get_available) {
+        if ( grep { /$v/ } @installed ) {
+            say "$v - installed";
+        }
+        else {
+            say $v;
+        }
     }
+
+    return 0;
 }
 
 sub uninstall {

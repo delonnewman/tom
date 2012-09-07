@@ -15,7 +15,7 @@ PERL_DEV_DEPS=
 
 all: build-deps
 
-build: build/ build/$(BIN) build/$(BIN).bat
+build: build/ build/$(BIN) build/$(BIN).bat build/$(MAN)
 
 build/:
 	mkdir build
@@ -25,6 +25,9 @@ build/$(BIN):
 
 build/$(BIN).bat:
 	cp bin/$(BIN).bat build/
+
+build/$(MAN):
+	cp doc/$(MAN) build/
 
 build-deps:
 	#$(CPAN_BIN) $(PERL_DEV_DEPS)
