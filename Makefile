@@ -47,17 +47,13 @@ uninstall:
 	rm $(DIR)/$(BIN)
 	rm $(DOC)/$(MAN)
 
-doc: clean_doc README $(BIN).1
-
-clean_doc:
-	rm README # force update
-	rm $(BIN).1 # force update
+doc: README $(BIN).1
 
 README:
-	pod2text $(BIN) > README
+	pod2text bin/$(BIN) > README
 
 $(BIN).1:
-	pod2man -c $(BIN) $(BIN) > $(BIN).1
+	pod2man -c $(BIN) bin/$(BIN) > doc/$(BIN).1
 
 clean:
 	rm -rf build

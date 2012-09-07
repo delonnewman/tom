@@ -2,6 +2,7 @@ NAME
         tom - Control tomcat from the command line with simplicity
 
 SYNOPSIS
+        > tom available
         > tom install 5.5.35
         > tom list
         > tom up 5.5.35
@@ -15,6 +16,7 @@ REQUIREMENTS
   General
         perl 5.10 or greater
         HTTP::Tiny
+        Mojo::DOM
 
   Windows
         7za (the command line version of 7zip) installed in C:\Users\[USERNAME]\bin

@@ -238,7 +238,7 @@ sub list {
         glob "$INSTALL/apache-tomcat-*";
 
     if ( @versions ) {
-        say "Installed Tomcat Versions:";
+        say "Installed Tomcat versions:";
         say for @versions;
     }
     else {
@@ -402,6 +402,8 @@ Usage: $0 [COMMAND] [OPTIONS]
 
         list - List installed versions
 
+   available - List versions available for install
+
      version - Set default version
 
         ping - Test if Tomcat is up
@@ -436,6 +438,7 @@ __END__
 
 =head1 SYNOPSIS
 
+    > tom available
     > tom install 5.5.35
     > tom list
     > tom up 5.5.35
@@ -451,6 +454,7 @@ __END__
 
     perl 5.10 or greater
     HTTP::Tiny
+    Mojo::DOM
 
 =head2 Windows
 
