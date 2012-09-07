@@ -15,16 +15,27 @@ PERL_DEV_DEPS=
 
 all: build-deps
 
-build:
+build: build/ build/$(BIN) build/$(BIN).bat
+
+build/:
+	mkdir build
+
+build/$(BIN):
+	cp bin/$(BIN) build/
+
+build/$(BIN).bat:
+	cp bin/$(BIN).bat build/
 
 build-deps:
 	#$(CPAN_BIN) $(PERL_DEV_DEPS)
 
-install: build build-deps install-deps doc
-	cp $(BIN) $(DIR)
+install: build build-deps install-deps doc $(DIR)/$(BIN) $(DOC)/$(MAN)
+
+$(DIR)/$(BIN):
+	cp build/$(BIN) $(DIR)
+
+$(DOC)/$(MAN):
 	cp $(MAN) $(DOC)
-	cp $(SCRIPT) $(DIR)
-	cp $(RULE) $(UDEV)
 
 install-deps:
 	#$(CPAN_BIN) $(PERL_DEPS)
@@ -44,3 +55,6 @@ README:
 
 $(BIN).1:
 	pod2man -c $(BIN) $(BIN) > $(BIN).1
+
+clean:
+	rm -rf build
