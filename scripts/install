@@ -14,7 +14,6 @@ else {
     say '--> DONE.';
 }
 
-#grep { /$INSTALL/ }
 $INSTALL =~ s/\\/\\\\/g;
 if ( grep { /$INSTALL/ } split /;/, $ENV{PATH} ) {
     say "It looks like tom is already in your PATH";
