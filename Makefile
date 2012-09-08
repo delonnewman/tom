@@ -22,10 +22,13 @@ tom.zip: build-win32
 
 build: build/ build/$(BIN) build/$(MAN) build/README
 
-build-win32: clean-code build build/$(BIN).bat build/7zip build/perl build/install.bat
+build-win32: clean-code build build/$(BIN).bat build/7zip build/perl build/install.bat build/install
 
 build/install.bat:
 	cp scripts/install.bat build/
+
+build/install:
+	cp scripts/install build/
 
 build/7zip:
 	unzip -o extra/7za920.zip -d build/7zip
@@ -81,3 +84,4 @@ clean-code:
 	rm build/tom
 	rm build/tom.bat
 	rm build/install.bat
+	rm build/install

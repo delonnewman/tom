@@ -3,31 +3,26 @@ use v5.10;
 use strict;
 use warnings;
 use Win32::TieRegistry;
-use ExtUtils::Install;
 
-my @FILES = qw{
-tom
-tom.bat
-README
-local
-};
+my $INSTALL = "C:\\Program Files\\tom";
+if ( -e $INSTALL ) {
+    say "It looks like tom is already installed.";
+}
+else {
+    say "==> Installing tom...";
+    system "cmd.exe /K xcopy /S . \"$INSTALL\" && exit";
+    say '--> DONE.';
+}
 
-my $INSTALL = 'C:\\Program Files\\tom';
-say "==> Installing tom...";
-#my @files = glob '*';
-#for my $f (@files) {
-#    next if grep { $f =~ /$_/ } @IGNORE;
-#    my $d = -d $f ? "$INSTALL\\$f" : $INSTALL;
-#    say "Installing $f to $d";
-#    install({ $f => $d });
-#}
-mkdir 'build' unless -e 'build';
-install({ "./bin" => 'build' });    
-#install({});
-say "- ok.";
-
-say "==> Adding tom to system path...";
-my $key  = 'HKEY_CURRENT_USER\\Environment\\PATH';
-my $path = $Registry->{$key};
-$Registry->{$key} = "$path;$INSTALL";
-say "- DONE.";
+#grep { /$INSTALL/ }
+$INSTALL =~ s/\\/\\\\/g;
+if ( grep { /$INSTALL/ } split /;/, $ENV{PATH} ) {
+    say "It looks like tom is already in your PATH";
+}
+else {
+    say "==> Adding tom to system path...";
+    my $key  = 'HKEY_CURRENT_USER\\Environment\\PATH';
+    my $path = $Registry->{$key};
+    $Registry->{$key} = "$path;$INSTALL";
+    say "- DONE.";
+}
