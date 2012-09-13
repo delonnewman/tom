@@ -7,6 +7,7 @@ MAN=$(BIN).1
 # dirs
 DIR=/usr/local/bin
 DOC=/usr/local/share/man/man1
+WIN32_INSTALL="/cygdrive/c/Program Files/tom"
 
 # dependencies
 CPAN_BIN=cpanm
@@ -55,6 +56,10 @@ build-deps:
 	#$(CPAN_BIN) $(PERL_DEV_DEPS)
 
 install: build build-deps install-deps doc $(DIR)/$(BIN) $(DOC)/$(MAN)
+
+install-win32: build-win32
+	cp build/$(BIN) $(WIN32_INSTALL)
+	cp build/$(BIN).bat $(WIN32_INSTALL)
 
 $(DIR)/$(BIN):
 	cp build/$(BIN) $(DIR)

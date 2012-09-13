@@ -27,10 +27,14 @@ my $HOST    = 'localhost';
 my $PORT    = '8080';
 my $TIMEOUT = 2;
 
+# install options
+my $ADMIN   = 0;
+
 GetOptions(
     'host=s'    => \$HOST,
     'port=s'    => \$PORT,
-    'timeout=i' => \$TIMEOUT
+    'timeout=i' => \$TIMEOUT,
+    'admin'     => \$ADMIN
 );
 
 # Grab second arg after parsing flags
@@ -233,6 +237,61 @@ sub select_available($$) {
     undef;
 }
 
+sub fetch_install($$) {
+    my ($version, $fn) = @_;
+
+    my @urls = $fn->($version);
+
+    my $work = path($ROOT => 'work');
+    mkdir $work unless -e $work;
+
+    say "Downloading...";
+
+    my $t = HTTP::Tiny->new;
+    for my $url (@urls) {
+        my $f = path($work => basename $url);
+
+        say $f;
+        if ( -e $f ) {
+            my $r = extract($f => $INSTALL);
+            say "Installed Tomcat version $version.";
+            return $r;
+        }
+        else {
+            my $res = $t->get($url);
+            if ( $res->{success} ) {
+                open my $fh, '>', $f or die "can't write to $f";
+                binmode $fh;
+                print $fh $res->{content};
+                say "ok - downloaded to $f";
+            }
+
+            if ( -e $f ) {
+                my $r = extract($f => $INSTALL);
+                say "Installed Tomcat version $version.";
+                return $r;
+            }
+        }
+    }
+
+    say "Can't find Tomcat version $version.";
+    return 1;
+}
+
+sub mirrormap {
+    my ($version, $pat) = @_;
+    die "A pattern is required for matching remote files" unless $pat;
+    
+    my @v     = parse_version($version);
+    my $major = $v[0];
+
+    map {
+        my $path = "$_/tomcat-$major/v$version/bin";
+        if ( $^O =~ /win32/i ) { "$path/$pat.zip" }
+        else                   { "$path/$pat.tar.gz" }
+    } @MIRRORS;
+}
+
 #
 # Commands
 #
@@ -387,55 +446,32 @@ sub install {
 
     select_available $pattern => sub {
         my ($version) = @_;
-        my @v         = parse_version($version);
-        my $major     = $v[0];
-    
-        my @urls = map {
-            my $path = "$_/tomcat-$major/v$version/bin";
-            if ( $^O =~ /win32/i ) { "$path/apache-tomcat-$version.zip" }
-            else                   { "$path/apache-tomcat-$version.tar.gz" }
-        } @MIRRORS;
     
         my $install = path($INSTALL => "apache-tomcat-$version");
         if ( -e $install ) {
             say "Tomcat version $version is already installed at $install";
-            return 0;
+            if ( !$ADMIN || -e path($install => 'server' => 'webapps' => 'admin') ) {
+                return 0;
+            }
+            else {
+                fetch_install $version => sub {
+                    mirrormap($version => "apache-tomcat-$version-admin");
+                };
+            }
         }
         else {
-            my $work = path($ROOT => 'work');
-            mkdir $work unless -e $work;
-    
-            say "Downloading...";
-    
-            my $t = HTTP::Tiny->new;
-            for my $url (@urls) {
-                my $f = path($work => basename $url);
-    
-                say $f;
-                if ( -e $f ) {
-                    my $r = extract($f => $INSTALL);
-                    say "Installed Tomcat version $version.";
-                    return $r;
-                }
-                else {
-                    my $res = $t->get($url);
-                    if ( $res->{success} ) {
-                        open my $fh, '>', $f or die "can't write to $f";
-                        binmode $fh;
-                        print $fh $res->{content};
-                        say "ok - downloaded to $f";
-                    }
-    
-                    if ( -e $f ) {
-                        my $r = extract($f => $INSTALL);
-                        say "Installed Tomcat version $version.";
-                        return $r;
-                    }
+            my $r = fetch_install $version => sub {
+                mirrormap($version => "apache-tomcat-$version");
+            };
+
+            if ( $ADMIN ) {
+                fetch_install $version => sub {
+                    mirrormap($version => "apache-tomcat-$version-admin");
                 }
             }
-    
-            say "Can't find Tomcat version $version.";
-            return 1;
+            else {
+                return $r;
+            }
         }
     };
 }
