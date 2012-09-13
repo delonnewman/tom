@@ -47,6 +47,22 @@ COMMANDS
 
     Set a default version
 
+        available
+
+    List all versions of Tomcat that are available for install
+
+        uninstall VERSION
+
+    Uninstalls a version of Tomcat
+
+        install VERSION
+
+    Installs a version of Tomcat
+
+        help
+
+    Displays a help message
+
 REQUIREMENTS
   General
         perl 5.10 or greater

@@ -381,12 +381,8 @@ seconds) for testing if a tomcat instance is currently running.
 
 sub restart {
     my ($version) = @_;
-
-    if ( ping($HOST => $PORT, $TIMEOUT) == 1 ) { ctl(startup => $VERSION) }
-    else {
-        ctl(shutdown => $VERSION);
-        ctl(startup  => $VERSION);
-    }
+    ctl(shutdown => $VERSION);
+    ctl(startup  => $VERSION);
 }
 
 =pod
@@ -459,6 +455,14 @@ sub default_version {
     };
 }
 
+=pod
+
+    available
+
+List all versions of Tomcat that are available for install
+
+=cut
+
 sub available {
     my ($version) = @_;
 
@@ -476,6 +480,14 @@ sub available {
 
     return 0;
 }
+
+=pod
+
+    uninstall VERSION
+
+Uninstalls a version of Tomcat
+
+=cut
 
 sub uninstall {
     my ($pattern) = @_;
@@ -509,6 +521,14 @@ sub uninstall {
         }
     };
 }
+
+=pod
+
+    install VERSION
+
+Installs a version of Tomcat
+
+=cut
 
 sub install {
     my ($pattern) = @_;
@@ -546,6 +566,14 @@ sub install {
         }
     };
 }
+
+=pod
+
+    help
+
+Displays a help message
+
+=cut
 
 sub help {
     say <<HELP;
