@@ -9,6 +9,26 @@ use File::Basename;
 use Data::Dump qw{ dump };
 use Mojo::DOM;
 
+=pod
+
+=head1 NAME
+
+    tom - Control tomcat from the command line with simplicity
+
+=head1 SYNOPSIS
+
+    > tom available
+    > tom install 5.5.35
+    > tom list
+    > tom up 5.5.35
+    > tom down
+    > tom restart
+    > tom ping
+    > tom version 6.0.35
+    > tom uninstall 5.5.35
+
+=cut
+
 my $HOME    = $ENV{HOME} // "$ENV{HOMEDRIVE}$ENV{HOMEPATH}";
 my $ROOT    = do {
     my $r = path($HOME => '.tom');
@@ -292,9 +312,20 @@ sub mirrormap {
     } @MIRRORS;
 }
 
-#
-# Commands
-#
+=pod
+
+=head1 COMMANDS
+
+    up [VERSION]
+
+Starts up the version of tomcat specified or the default version if
+the version is omitted.
+
+    down
+
+Shutsdown the currently running tomcat instance
+
+=cut
 
 sub ctl {
     my ($cmd, $version) = @_;
@@ -334,6 +365,20 @@ sub ctl {
     };
 }
 
+=pod
+
+    restart [VERSION] [OPTIONS]
+
+Restarts a currently running instance of tomcat if one is running otherwise
+it just starts a new instance.  Can specify the host, port and timeout (in
+seconds) for testing if a tomcat instance is currently running.
+
+    --host, -h
+    --port, -p
+    --timeout, -t
+
+=cut
+
 sub restart {
     my ($version) = @_;
 
@@ -343,6 +388,14 @@ sub restart {
         ctl(startup  => $VERSION);
     }
 }
+
+=pod
+
+    list
+
+List all installed versions of Tomcat
+
+=cut
 
 sub list {
     my ($version) = @_;
@@ -363,6 +416,16 @@ sub list {
     return 0;
 }
 
+=pod
+
+    ping [OPTIONS]
+
+Test if a HTTP server is running at a given host and port combination,
+can also specify a timeout in seconds.  The default host is "localhost",
+the default port is 8080, and the default timeout is 2 seconds.
+
+=cut
+
 sub ping {
     my ($host, $port, $time) = @_;
     my $url = "http://$host:$port";
@@ -376,6 +439,14 @@ sub ping {
         return 1;
     }
 }
+
+=pod
+
+    version VERSION
+
+Set a default version
+
+=cut
 
 sub default_version {
     my ($version) = @_;
@@ -518,22 +589,6 @@ HELP
 }
 
 __END__
-
-=head1 NAME
-
-    tom - Control tomcat from the command line with simplicity
-
-=head1 SYNOPSIS
-
-    > tom available
-    > tom install 5.5.35
-    > tom list
-    > tom up 5.5.35
-    > tom down
-    > tom restart
-    > tom ping
-    > tom version 6.0.35
-    > tom uninstall 5.5.35
 
 =head1 REQUIREMENTS
 

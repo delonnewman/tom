@@ -12,11 +12,46 @@ SYNOPSIS
         > tom version 6.0.35
         > tom uninstall 5.5.35
 
+COMMANDS
+        up [VERSION]
+
+    Starts up the version of tomcat specified or the default version if the
+    version is omitted.
+
+        down
+
+    Shutsdown the currently running tomcat instance
+
+        restart [VERSION] [OPTIONS]
+
+    Restarts a currently running instance of tomcat if one is running
+    otherwise it just starts a new instance. Can specify the host, port and
+    timeout (in seconds) for testing if a tomcat instance is currently
+    running.
+
+        --host, -h
+        --port, -p
+        --timeout, -t
+
+        list
+
+    List all installed versions of Tomcat
+
+        ping [OPTIONS]
+
+    Test if a HTTP server is running at a given host and port combination,
+    can also specify a timeout in seconds. The default host is "localhost",
+    the default port is 8080, and the default timeout is 2 seconds.
+
+        version VERSION
+
+    Set a default version
+
 REQUIREMENTS
   General
         perl 5.10 or greater
         HTTP::Tiny
-        Mojo::DOM
+        Mojo::DOM 3.38
 
   Windows
         7za (the command line version of 7zip) installed in C:\Users\[USERNAME]\bin

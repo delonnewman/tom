@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "TOM 1"
-.TH TOM 1 "2012-09-06" "perl v5.14.2" "tom"
+.TH TOM 1 "2012-09-13" "perl v5.14.2" "tom"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -146,6 +146,54 @@
 \&    > tom version 6.0.35
 \&    > tom uninstall 5.5.35
 .Ve
+.SH "COMMANDS"
+.IX Header "COMMANDS"
+.Vb 1
+\&    up [VERSION]
+.Ve
+.PP
+Starts up the version of tomcat specified or the default version if
+the version is omitted.
+.PP
+.Vb 1
+\&    down
+.Ve
+.PP
+Shutsdown the currently running tomcat instance
+.PP
+.Vb 1
+\&    restart [VERSION] [OPTIONS]
+.Ve
+.PP
+Restarts a currently running instance of tomcat if one is running otherwise
+it just starts a new instance.  Can specify the host, port and timeout (in
+seconds) for testing if a tomcat instance is currently running.
+.PP
+.Vb 3
+\&    \-\-host, \-h
+\&    \-\-port, \-p
+\&    \-\-timeout, \-t
+.Ve
+.PP
+.Vb 1
+\&    list
+.Ve
+.PP
+List all installed versions of Tomcat
+.PP
+.Vb 1
+\&    ping [OPTIONS]
+.Ve
+.PP
+Test if a \s-1HTTP\s0 server is running at a given host and port combination,
+can also specify a timeout in seconds.  The default host is \*(L"localhost\*(R",
+the default port is 8080, and the default timeout is 2 seconds.
+.PP
+.Vb 1
+\&    version VERSION
+.Ve
+.PP
+Set a default version
 .SH "REQUIREMENTS"
 .IX Header "REQUIREMENTS"
 .SS "General"
@@ -153,7 +201,7 @@
 .Vb 3
 \&    perl 5.10 or greater
 \&    HTTP::Tiny
-\&    Mojo::DOM
+\&    Mojo::DOM 3.38
 .Ve
 .SS "Windows"
 .IX Subsection "Windows"
