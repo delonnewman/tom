@@ -64,6 +64,12 @@ version
 
     Installs a version of Tomcat
 
+  deploy
+        tom deploy [VERSION] WARFILE|DIRECTORY
+
+    Deploy a web application to a given version of Tomcat via a warfile or
+    directory.
+
   help
         tom help
 
