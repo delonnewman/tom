@@ -148,19 +148,23 @@
 .Ve
 .SH "COMMANDS"
 .IX Header "COMMANDS"
+.SS "up"
+.IX Subsection "up"
 .Vb 1
 \&    up [VERSION]
 .Ve
 .PP
 Starts up the version of tomcat specified or the default version if
 the version is omitted.
-.PP
+.SS "down"
+.IX Subsection "down"
 .Vb 1
 \&    down
 .Ve
 .PP
 Shutsdown the currently running tomcat instance
-.PP
+.SS "restart"
+.IX Subsection "restart"
 .Vb 1
 \&    restart [VERSION] [OPTIONS]
 .Ve
@@ -168,19 +172,15 @@ Shutsdown the currently running tomcat instance
 Restarts a currently running instance of tomcat if one is running otherwise
 it just starts a new instance.  Can specify the host, port and timeout (in
 seconds) for testing if a tomcat instance is currently running.
-.PP
-.Vb 3
-\&    \-\-host, \-h
-\&    \-\-port, \-p
-\&    \-\-timeout, \-t
-.Ve
-.PP
+.SS "list"
+.IX Subsection "list"
 .Vb 1
 \&    list
 .Ve
 .PP
 List all installed versions of Tomcat
-.PP
+.SS "ping"
+.IX Subsection "ping"
 .Vb 1
 \&    ping [OPTIONS]
 .Ve
@@ -188,31 +188,36 @@ List all installed versions of Tomcat
 Test if a \s-1HTTP\s0 server is running at a given host and port combination,
 can also specify a timeout in seconds.  The default host is \*(L"localhost\*(R",
 the default port is 8080, and the default timeout is 2 seconds.
-.PP
+.SH "version"
+.IX Header "version"
 .Vb 1
 \&    version VERSION
 .Ve
 .PP
 Set a default version
-.PP
+.SS "available"
+.IX Subsection "available"
 .Vb 1
 \&    available
 .Ve
 .PP
 List all versions of Tomcat that are available for install
-.PP
+.SS "uninstall"
+.IX Subsection "uninstall"
 .Vb 1
 \&    uninstall VERSION
 .Ve
 .PP
 Uninstalls a version of Tomcat
-.PP
+.SS "install"
+.IX Subsection "install"
 .Vb 1
 \&    install VERSION
 .Ve
 .PP
 Installs a version of Tomcat
-.PP
+.SS "help"
+.IX Subsection "help"
 .Vb 1
 \&    help
 .Ve

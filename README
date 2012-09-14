@@ -13,15 +13,18 @@ SYNOPSIS
         > tom uninstall 5.5.35
 
 COMMANDS
+  up
         up [VERSION]
 
     Starts up the version of tomcat specified or the default version if the
     version is omitted.
 
+  down
         down
 
     Shutsdown the currently running tomcat instance
 
+  restart
         restart [VERSION] [OPTIONS]
 
     Restarts a currently running instance of tomcat if one is running
@@ -29,36 +32,39 @@ COMMANDS
     timeout (in seconds) for testing if a tomcat instance is currently
     running.
 
-        --host, -h
-        --port, -p
-        --timeout, -t
-
+  list
         list
 
     List all installed versions of Tomcat
 
+  ping
         ping [OPTIONS]
 
     Test if a HTTP server is running at a given host and port combination,
     can also specify a timeout in seconds. The default host is "localhost",
     the default port is 8080, and the default timeout is 2 seconds.
 
+version
         version VERSION
 
     Set a default version
 
+  available
         available
 
     List all versions of Tomcat that are available for install
 
+  uninstall
         uninstall VERSION
 
     Uninstalls a version of Tomcat
 
+  install
         install VERSION
 
     Installs a version of Tomcat
 
+  help
         help
 
     Displays a help message

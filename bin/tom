@@ -35,12 +35,10 @@ my $ROOT    = do {
     mkdir $r unless -e $r;
     $r;
 };
+
 my $INSTALL = path($HOME => '.local');
 my $VFILE   = path($ROOT => 'version');
-my @MIRRORS = qw{
-    http://mirrors.gigenet.com/apache/tomcat
-    http://apache.tradebit.com/pub/tomcat
-};
+my @MIRRORS = map { chomp; "$_/tomcat" } <DATA>;
 
 # ping defaults
 my $HOST    = 'localhost';
@@ -78,8 +76,329 @@ commands(
 
 error(\&help) unless @ARGV;
 
+
+=pod
+
+=head1 COMMANDS
+
+=head2 up
+
+    up [VERSION]
+
+Starts up the version of tomcat specified or the default version if
+the version is omitted.
+
+=head2 down
+
+    down
+
+Shutsdown the currently running tomcat instance
+
+=cut
+
+sub ctl {
+    my ($cmd, $version) = @_;
+    $version // error(\&list, "Must specify version or set a default version");
+
+    if ( $cmd eq 'shutdown' && ping($HOST => $PORT, $TIMEOUT) == 1 ) {
+        say "Tomcat doesn't appear to be running.";
+        return 0;
+    }
+
+    if ( $cmd eq 'startup' && ping($HOST => $PORT, $TIMEOUT) == 0 ) {
+        say "Tomcat is already up.";
+        return 0;
+    }
+
+    select_version $version => sub {
+        my ($v) = @_;
+        my $ext = $^O =~ /win32/i ? '.bat' : '.sh';
+        my $root = path($INSTALL => "apache-tomcat-$v");
+        my $bin  = path($root => bin => "${cmd}${ext}");
+    
+        $ENV{CATALINA_HOME} = $root; # for windows scripts
+    
+        error(\&help => "must specify version") unless $v;
+    
+        if ( -e $bin ) {
+            say "$cmd: Tomcat $v...";
+            say "running '$bin'";
+            system $bin;
+            say "DONE.";
+            return 0;
+        }
+        else {
+            say STDERR "'$bin' doesn't exist";
+            return 1;
+        }
+    };
+}
+
+=pod
+
+=head2 restart
+
+    restart [VERSION] [OPTIONS]
+
+Restarts a currently running instance of tomcat if one is running otherwise
+it just starts a new instance.  Can specify the host, port and timeout (in
+seconds) for testing if a tomcat instance is currently running.
+
+=cut
+
+sub restart {
+    my ($version) = @_;
+    ctl(shutdown => $VERSION);
+    ctl(startup  => $VERSION);
+}
+
+=pod
+
+=head2 list
+
+    list
+
+List all installed versions of Tomcat
+
+=cut
+
+sub list {
+    my ($version) = @_;
+    my @versions =
+        map { $version && /$version/ ? "$_ * default " : $_ }
+        get_versions();
+
+    if ( @versions ) {
+        say "Installed Tomcat versions:";
+        say for @versions;
+    }
+    else {
+        say "There doesn't appear to be any installed versions of Tomcat.\n",
+            "Try using the 'install' command.";
+        return 1;
+    }
+
+    return 0;
+}
+
+=pod
+
+=head2 ping
+
+    ping [OPTIONS]
+
+Test if a HTTP server is running at a given host and port combination,
+can also specify a timeout in seconds.  The default host is "localhost",
+the default port is 8080, and the default timeout is 2 seconds.
+
+=cut
+
+sub ping {
+    my ($host, $port, $time) = @_;
+    my $url = "http://$host:$port";
+    my $res = HTTP::Tiny->new(timeout => $time)->get($url);
+    if ( $res->{success} ) {
+        say "An HTTP server is up at $url";
+        return 0;
+    }
+    else {
+        say "Timed out after ", plural($time => "second"), " when testing $url.";
+        return 1;
+    }
+}
+
+=pod
+
+=head1 version
+
+    version VERSION
+
+Set a default version
+
+=cut
+
+sub default_version {
+    my ($version) = @_;
+
+    select_version $version => sub {
+        my ($v) = @_;
+        write_to($VFILE => $v);
+        say "Default version set to $v";
+        return 0;
+    };
+}
+
+=pod
+
+=head2 available
+
+    available
+
+List all versions of Tomcat that are available for install
+
+=cut
+
+sub available {
+    my ($version) = @_;
+
+    my @installed = get_versions();
+
+    say "Tomcat versions available for install:";
+    for my $v (get_available()) {
+        if ( grep { /$v/ } @installed ) {
+            say "$v - installed";
+        }
+        else {
+            say $v;
+        }
+    }
+
+    return 0;
+}
+
+=pod
+
+=head2 uninstall
+
+    uninstall VERSION
+
+Uninstalls a version of Tomcat
+
+=cut
+
+sub uninstall {
+    my ($pattern) = @_;
+
+    error(\&list => 'A version must be specified') unless $pattern;
+    
+    select_version $pattern => sub {
+        my ($version) = @_;
+        my $install = path($INSTALL => "apache-tomcat-$version");
+        if ( -e $install ) {
+            if ( $^O =~ /win32/i ) { system "cmd.exe /K \"rmdir /S /Q $install && exit\"" }
+            else {
+                unlink $install or error(undef, $!);
+            }
+    
+            my $v = slurp($VFILE);
+            if ( $v eq $version ) {
+                if ( my @vs = get_versions() ) {
+                    write_to($VFILE => $vs[0]);
+                }
+                else {
+                    write_to($VFILE => '');
+                }
+            }
+    
+            say "Tomcat $version has been removed";
+            return 0;
+        }
+        else {
+            error(\&list => "Tomcat $version does not apear to be installed");
+        }
+    };
+}
+
+=pod
+
+=head2 install
+
+    install VERSION
+
+Installs a version of Tomcat
+
+=cut
+
+sub install {
+    my ($pattern) = @_;
+
+    error(\&help => 'A version must be specified') unless $pattern;
+
+    select_available $pattern => sub {
+        my ($version) = @_;
+    
+        my $install = path($INSTALL => "apache-tomcat-$version");
+        if ( -e $install ) {
+            say "Tomcat version $version is already installed at $install";
+            if ( !$ADMIN || -e path($install => 'server' => 'webapps' => 'admin') ) {
+                return 0;
+            }
+            else {
+                fetch_install($version => sub {
+                    mirrormap($version => "apache-tomcat-$version-admin");
+                });
+            }
+        }
+        else {
+            my $r = fetch_install($version => sub {
+                mirrormap($version => "apache-tomcat-$version");
+            });
+
+            if ( $ADMIN ) {
+                fetch_install($version => sub {
+                    mirrormap($version => "apache-tomcat-$version-admin");
+                });
+            }
+            else {
+                return $r;
+            }
+        }
+    };
+}
+
+=pod
+
+=head2 help
+
+    help
+
+Displays a help message
+
+=cut
+
+sub help {
+    say <<HELP;
+Usage: $0 [COMMAND] [OPTIONS]
+
+  Commands:
+        help - Display this message
+
+     install - Install a version of Tomcat
+
+   uninstall - Uninstall a version of Tomcat
+
+        list - List installed versions
+
+   available - List versions available for install
+
+     version - Set default version
+
+        ping - Test if Tomcat is up
+
+          up - Startup Tomcat server
+
+        down - Shutdown Tomcat server
+
+     restart - Restart Tomcat server
+
+  Options:
+     --port, -p PORT
+        Specify an HTTP port (8080 by default)
+
+     --host, -h HOST
+        Specify a network host (localhost by default)
+
+     --timeout, -t TIMEOUT
+        Specify timeout in seconds (2 seconds by default)
+
+  returns 0 on success and 1 on failure
+HELP
+
+    exit 0;
+}
+
 #
-# Functions
+# Utilities
 #
 
 sub path { File::Spec->join(@_) }
@@ -314,310 +633,6 @@ sub mirrormap {
 
 =pod
 
-=head1 COMMANDS
-
-    up [VERSION]
-
-Starts up the version of tomcat specified or the default version if
-the version is omitted.
-
-    down
-
-Shutsdown the currently running tomcat instance
-
-=cut
-
-sub ctl {
-    my ($cmd, $version) = @_;
-    $version // error(\&list, "Must specify version or set a default version");
-
-    if ( $cmd eq 'shutdown' && ping($HOST => $PORT, $TIMEOUT) == 1 ) {
-        say "Tomcat doesn't appear to be running.";
-        return 0;
-    }
-
-    if ( $cmd eq 'startup' && ping($HOST => $PORT, $TIMEOUT) == 0 ) {
-        say "Tomcat is already up.";
-        return 0;
-    }
-
-    select_version $version => sub {
-        my ($v) = @_;
-        my $ext = $^O =~ /win32/i ? '.bat' : '.sh';
-        my $root = path($INSTALL => "apache-tomcat-$v");
-        my $bin  = path($root => bin => "${cmd}${ext}");
-    
-        $ENV{CATALINA_HOME} = $root; # for windows scripts
-    
-        error(\&help => "must specify version") unless $v;
-    
-        if ( -e $bin ) {
-            say "$cmd: Tomcat $v...";
-            say "running '$bin'";
-            system $bin;
-            say "DONE.";
-            return 0;
-        }
-        else {
-            say STDERR "'$bin' doesn't exist";
-            return 1;
-        }
-    };
-}
-
-=pod
-
-    restart [VERSION] [OPTIONS]
-
-Restarts a currently running instance of tomcat if one is running otherwise
-it just starts a new instance.  Can specify the host, port and timeout (in
-seconds) for testing if a tomcat instance is currently running.
-
-    --host, -h
-    --port, -p
-    --timeout, -t
-
-=cut
-
-sub restart {
-    my ($version) = @_;
-    ctl(shutdown => $VERSION);
-    ctl(startup  => $VERSION);
-}
-
-=pod
-
-    list
-
-List all installed versions of Tomcat
-
-=cut
-
-sub list {
-    my ($version) = @_;
-    my @versions =
-        map { $version && /$version/ ? "$_ * default " : $_ }
-        get_versions;
-
-    if ( @versions ) {
-        say "Installed Tomcat versions:";
-        say for @versions;
-    }
-    else {
-        say "There doesn't appear to be any installed versions of Tomcat.\n",
-            "Try using the 'install' command.";
-        return 1;
-    }
-
-    return 0;
-}
-
-=pod
-
-    ping [OPTIONS]
-
-Test if a HTTP server is running at a given host and port combination,
-can also specify a timeout in seconds.  The default host is "localhost",
-the default port is 8080, and the default timeout is 2 seconds.
-
-=cut
-
-sub ping {
-    my ($host, $port, $time) = @_;
-    my $url = "http://$host:$port";
-    my $res = HTTP::Tiny->new(timeout => $time)->get($url);
-    if ( $res->{success} ) {
-        say "An HTTP server is up at $url";
-        return 0;
-    }
-    else {
-        say "Timed out after ", plural($time => "second"), " when testing $url.";
-        return 1;
-    }
-}
-
-=pod
-
-    version VERSION
-
-Set a default version
-
-=cut
-
-sub default_version {
-    my ($version) = @_;
-
-    select_version $version => sub {
-        my ($v) = @_;
-        write_to $VFILE => $v;
-        say "Default version set to $v";
-        return 0;
-    };
-}
-
-=pod
-
-    available
-
-List all versions of Tomcat that are available for install
-
-=cut
-
-sub available {
-    my ($version) = @_;
-
-    my @installed = get_versions;
-
-    say "Tomcat versions available for install:";
-    for my $v (get_available) {
-        if ( grep { /$v/ } @installed ) {
-            say "$v - installed";
-        }
-        else {
-            say $v;
-        }
-    }
-
-    return 0;
-}
-
-=pod
-
-    uninstall VERSION
-
-Uninstalls a version of Tomcat
-
-=cut
-
-sub uninstall {
-    my ($pattern) = @_;
-
-    error(\&list => 'A version must be specified') unless $pattern;
-    
-    select_version $pattern => sub {
-        my ($version) = @_;
-        my $install = path($INSTALL => "apache-tomcat-$version");
-        if ( -e $install ) {
-            if ( $^O =~ /win32/i ) { system "cmd.exe /K \"rmdir /S /Q $install && exit\"" }
-            else {
-                unlink $install or error(undef, $!);
-            }
-    
-            my $v = slurp($VFILE);
-            if ( $v eq $version ) {
-                if ( my @vs = get_versions() ) {
-                    write_to $VFILE => $vs[0];
-                }
-                else {
-                    write_to $VFILE => '';
-                }
-            }
-    
-            say "Tomcat $version has been removed";
-            return 0;
-        }
-        else {
-            error(\&list => "Tomcat $version does not apear to be installed");
-        }
-    };
-}
-
-=pod
-
-    install VERSION
-
-Installs a version of Tomcat
-
-=cut
-
-sub install {
-    my ($pattern) = @_;
-
-    error(\&help => 'A version must be specified') unless $pattern;
-
-    select_available $pattern => sub {
-        my ($version) = @_;
-    
-        my $install = path($INSTALL => "apache-tomcat-$version");
-        if ( -e $install ) {
-            say "Tomcat version $version is already installed at $install";
-            if ( !$ADMIN || -e path($install => 'server' => 'webapps' => 'admin') ) {
-                return 0;
-            }
-            else {
-                fetch_install $version => sub {
-                    mirrormap($version => "apache-tomcat-$version-admin");
-                };
-            }
-        }
-        else {
-            my $r = fetch_install $version => sub {
-                mirrormap($version => "apache-tomcat-$version");
-            };
-
-            if ( $ADMIN ) {
-                fetch_install $version => sub {
-                    mirrormap($version => "apache-tomcat-$version-admin");
-                }
-            }
-            else {
-                return $r;
-            }
-        }
-    };
-}
-
-=pod
-
-    help
-
-Displays a help message
-
-=cut
-
-sub help {
-    say <<HELP;
-Usage: $0 [COMMAND] [OPTIONS]
-
-  Commands:
-        help - Display this message
-
-     install - Install a version of Tomcat
-
-   uninstall - Uninstall a version of Tomcat
-
-        list - List installed versions
-
-   available - List versions available for install
-
-     version - Set default version
-
-        ping - Test if Tomcat is up
-
-          up - Startup Tomcat server
-
-        down - Shutdown Tomcat server
-
-     restart - Restart Tomcat server
-
-  Options:
-     --port, -p PORT
-        Specify an HTTP port (8080 by default)
-
-     --host, -h HOST
-        Specify a network host (localhost by default)
-
-     --timeout, -t TIMEOUT
-        Specify timeout in seconds (2 seconds by default)
-
-  returns 0 on success and 1 on failure
-HELP
-
-    exit 0;
-}
-
-__END__
-
 =head1 REQUIREMENTS
 
 =head2 General
@@ -640,3 +655,13 @@ __END__
     Delon Newman <delon.newman@gmail.com>
 
 =cut
+
+1;
+
+__DATA__
+http://mirrors.gigenet.com/apache
+http://apache.tradebit.com/pub
+http://apache.mirrors.pair.com
+http://mirror.cc.columbia.edu/pub/software/apache
+http://apache.osuosl.org
+http://mirrors.sonic.net/apache
