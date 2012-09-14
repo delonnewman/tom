@@ -83,14 +83,14 @@ error(\&help) unless @ARGV;
 
 =head2 up
 
-    up [VERSION]
+    tom up [VERSION]
 
 Starts up the version of tomcat specified or the default version if
 the version is omitted.
 
 =head2 down
 
-    down
+    tom down
 
 Shutsdown the currently running tomcat instance
 
@@ -138,7 +138,7 @@ sub ctl {
 
 =head2 restart
 
-    restart [VERSION] [OPTIONS]
+    tom restart [VERSION] [OPTIONS]
 
 Restarts a currently running instance of tomcat if one is running otherwise
 it just starts a new instance.  Can specify the host, port and timeout (in
@@ -156,7 +156,7 @@ sub restart {
 
 =head2 list
 
-    list
+    tom list
 
 List all installed versions of Tomcat
 
@@ -185,7 +185,7 @@ sub list {
 
 =head2 ping
 
-    ping [OPTIONS]
+    tom ping [OPTIONS]
 
 Test if a HTTP server is running at a given host and port combination,
 can also specify a timeout in seconds.  The default host is "localhost",
@@ -211,7 +211,7 @@ sub ping {
 
 =head1 version
 
-    version VERSION
+    tom version VERSION
 
 Set a default version
 
@@ -232,7 +232,7 @@ sub default_version {
 
 =head2 available
 
-    available
+    tom available
 
 List all versions of Tomcat that are available for install
 
@@ -260,7 +260,7 @@ sub available {
 
 =head2 uninstall
 
-    uninstall VERSION
+    tom uninstall VERSION
 
 Uninstalls a version of Tomcat
 
@@ -303,7 +303,7 @@ sub uninstall {
 
 =head2 install
 
-    install VERSION
+    tom install VERSION
 
 Installs a version of Tomcat
 
@@ -350,7 +350,7 @@ sub install {
 
 =head2 help
 
-    help
+    tom help
 
 Displays a help message
 

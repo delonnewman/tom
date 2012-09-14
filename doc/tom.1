@@ -151,7 +151,7 @@
 .SS "up"
 .IX Subsection "up"
 .Vb 1
-\&    up [VERSION]
+\&    tom up [VERSION]
 .Ve
 .PP
 Starts up the version of tomcat specified or the default version if
@@ -159,14 +159,14 @@ the version is omitted.
 .SS "down"
 .IX Subsection "down"
 .Vb 1
-\&    down
+\&    tom down
 .Ve
 .PP
 Shutsdown the currently running tomcat instance
 .SS "restart"
 .IX Subsection "restart"
 .Vb 1
-\&    restart [VERSION] [OPTIONS]
+\&    tom restart [VERSION] [OPTIONS]
 .Ve
 .PP
 Restarts a currently running instance of tomcat if one is running otherwise
@@ -175,14 +175,14 @@ seconds) for testing if a tomcat instance is currently running.
 .SS "list"
 .IX Subsection "list"
 .Vb 1
-\&    list
+\&    tom list
 .Ve
 .PP
 List all installed versions of Tomcat
 .SS "ping"
 .IX Subsection "ping"
 .Vb 1
-\&    ping [OPTIONS]
+\&    tom ping [OPTIONS]
 .Ve
 .PP
 Test if a \s-1HTTP\s0 server is running at a given host and port combination,
@@ -191,35 +191,35 @@ the default port is 8080, and the default timeout is 2 seconds.
 .SH "version"
 .IX Header "version"
 .Vb 1
-\&    version VERSION
+\&    tom version VERSION
 .Ve
 .PP
 Set a default version
 .SS "available"
 .IX Subsection "available"
 .Vb 1
-\&    available
+\&    tom available
 .Ve
 .PP
 List all versions of Tomcat that are available for install
 .SS "uninstall"
 .IX Subsection "uninstall"
 .Vb 1
-\&    uninstall VERSION
+\&    tom uninstall VERSION
 .Ve
 .PP
 Uninstalls a version of Tomcat
 .SS "install"
 .IX Subsection "install"
 .Vb 1
-\&    install VERSION
+\&    tom install VERSION
 .Ve
 .PP
 Installs a version of Tomcat
 .SS "help"
 .IX Subsection "help"
 .Vb 1
-\&    help
+\&    tom help
 .Ve
 .PP
 Displays a help message
