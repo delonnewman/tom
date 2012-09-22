@@ -322,43 +322,39 @@ Installs a version of Tomcat
 =cut
 
 sub install {
-    my ($pattern) = @_;
+    my ($version) = @_;
 
-    error(\&help => 'A version must be specified') unless $pattern;
+    error(\&help => 'A version must be specified') unless $version;
 
-    select_available($pattern => sub {
-        my ($version) = @_;
-    
-        my $install = path($INSTALL => "apache-tomcat-$version");
-        if ( -e $install ) {
-            say "Tomcat version $version is already installed at $install";
-            if ( !$ADMIN || -e path($install => 'server' => 'webapps' => 'admin') ) {
-                return 0;
-            }
-            else {
-                say "Trying to install version $version";
-                fetch_install($version => sub {
-                    mirrormap($version => "apache-tomcat-$version-admin");
-                });
-            }
+    my $install = path($INSTALL => "apache-tomcat-$version");
+    if ( -e $install ) {
+        say "Tomcat version $version is already installed at $install";
+        if ( !$ADMIN || -e path($install => 'server' => 'webapps' => 'admin') ) {
+            return 0;
         }
         else {
             say "Trying to install version $version";
-            my $r = fetch_install($version => sub {
-                mirrormap($version => "apache-tomcat-$version");
+            fetch_install($version => sub {
+                mirrormap($version => "apache-tomcat-$version-admin");
             });
-
-            if ( $ADMIN ) {
-                say "Installing admin app for version $version";
-                fetch_install($version => sub {
-                    mirrormap($version => "apache-tomcat-$version-admin");
-                });
-            }
-            else {
-                return $r;
-            }
         }
-    });
+    }
+    else {
+        say "Trying to install version $version";
+        my $r = fetch_install($version => sub {
+            mirrormap($version => "apache-tomcat-$version");
+        });
+
+        if ( $ADMIN ) {
+            say "Installing admin app for version $version";
+            fetch_install($version => sub {
+                mirrormap($version => "apache-tomcat-$version-admin");
+            });
+        }
+        else {
+            return $r;
+        }
+    }
 }
 
 =pod
