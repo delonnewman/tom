@@ -283,7 +283,7 @@ sub uninstall {
 
     error(\&list => 'A version must be specified') unless $pattern;
     
-    select_version $pattern => sub {
+    select_version($pattern => sub {
         my ($version) = @_;
         my $install = path($INSTALL => "apache-tomcat-$version");
         if ( -e $install ) {
@@ -308,7 +308,7 @@ sub uninstall {
         else {
             error(\&list => "Tomcat $version does not apear to be installed");
         }
-    };
+    });
 }
 
 =pod
@@ -326,7 +326,7 @@ sub install {
 
     error(\&help => 'A version must be specified') unless $pattern;
 
-    select_available $pattern => sub {
+    select_available($pattern => sub {
         my ($version) = @_;
     
         my $install = path($INSTALL => "apache-tomcat-$version");
@@ -336,17 +336,20 @@ sub install {
                 return 0;
             }
             else {
+                say "Trying to install version $version";
                 fetch_install($version => sub {
                     mirrormap($version => "apache-tomcat-$version-admin");
                 });
             }
         }
         else {
+            say "Trying to install version $version";
             my $r = fetch_install($version => sub {
                 mirrormap($version => "apache-tomcat-$version");
             });
 
             if ( $ADMIN ) {
+                say "Installing admin app for version $version";
                 fetch_install($version => sub {
                     mirrormap($version => "apache-tomcat-$version-admin");
                 });
@@ -355,7 +358,7 @@ sub install {
                 return $r;
             }
         }
-    };
+    });
 }
 
 =pod
