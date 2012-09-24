@@ -1,4 +1,11 @@
-- Add ability to specify port for "up" command
+x Add ability to specify port for "up" command
 x Add "available" command for listing tomcat versions that are available for install
 x Add "uninstall" command
-- Improve installation especially for Windows
+x Improve installation especially for Windows
+- Add the ability to add users and roles
+- Add log viewing with a "tail" command
+- Start breaking commands out into modules
+- Create Alien::7za module for installing 7za
+- Make a Dist::Zilla project
+- Add to CPAN
+- create website via Github
