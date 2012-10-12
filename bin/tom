@@ -83,7 +83,8 @@ commands(
     down      => sub { exit ctl(shutdown => $VERSION) },
     version   => sub { exit default_version($VERSION) },
     restart   => sub { exit restart($VERSION) },
-    deploy    => sub { exit deploy($VERSION, @ARGV) }
+    deploy    => sub { exit deploy($VERSION, @ARGV) },
+    undeploy  => sub { exit undeploy($VERSION, @ARGV) }
 );
 
 error(\&help) unless @ARGV;
@@ -392,6 +393,41 @@ sub deploy {
 
 =pod
 
+=head2 undeploy
+
+    tom undeploy [VERSION] APPNAME
+
+Remove a deployed app from a given version of Tomcat.
+
+=cut
+
+sub undeploy {
+    my ($version, $file);
+    if    ( @_ <  1 ) { die "Must specify an app name to remove" }
+    elsif ( @_ == 2 ) { ($version, $file) = @_ }
+    else              { ($version, undef, $file) = @_ }
+
+    select_version($version => sub {
+        my ($v, $p) = @_;
+        if ( -e $p ) {
+            my $dir = path($p => 'webapps');
+            say "Removing $file from $dir...";
+            my $app = path($dir => $file);
+            my $war = "$app.war";
+            unlink $app if -e $app;
+            unlink $war if -e $war;
+            say "DONE.";
+            0;
+        }
+        else {
+            say "Installation path '$p' does not exist";
+            1;
+        }
+    });
+}
+
+=pod
+
 =head2 help
 
     tom help
@@ -426,6 +462,8 @@ Usage: $0 [COMMAND] [OPTIONS]
      restart - Restart Tomcat server
 
       deploy - Deploy a web application to a Tomcat server
+
+    undeploy - Remove a deployed web application from a Tomcat server
 
   Options:
      --port, -p PORT
