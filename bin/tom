@@ -9,9 +9,10 @@ use Getopt::Long;
 
 use HTTP::Tiny;
 
-use File::Copy;
-use File::Spec;
 use File::Basename;
+use File::Copy;
+use File::Path qw{ remove_tree };
+use File::Spec;
 
 use Mojo::DOM;
 
@@ -83,8 +84,10 @@ commands(
     down      => sub { exit ctl(shutdown => $VERSION) },
     version   => sub { exit default_version($VERSION) },
     restart   => sub { exit restart($VERSION) },
+    apps      => sub { exit apps($VERSION) },
     deploy    => sub { exit deploy($VERSION, @ARGV) },
-    undeploy  => sub { exit undeploy($VERSION, @ARGV) }
+    remove    => sub { exit remove($VERSION, @ARGV) }
+    tail      => sub { exit tail($VERSION, @ARGV) }
 );
 
 error(\&help) unless @ARGV;
@@ -360,6 +363,62 @@ sub install {
 
 =pod
 
+=head2 tail
+    
+    tom tail [VERSION] [LOGFILE]
+
+Display log entries as they are logged can optionally specify a Tomcat
+version or a log file in CATALINA_HOME/logs.
+
+=cut
+
+sub tail {
+    my ($version) = @_;
+    select_version($version => sub {
+        my ($v, $p) = @_;
+        if ( -e $p ) {
+            my $dir = path($p => 'webapps');
+            say "Apps installed for Tomcat version $v:";
+            say for sort map { basename $_ } glob "$dir/*";
+            0;
+        }
+        else {
+            say "Installation path '$p' does not exist";
+            1;
+        }
+    });
+}
+
+=pod
+
+=head2 apps
+    
+    tom apps [VERSION]
+
+Deploy a web application to a given version of Tomcat via a warfile
+or directory.
+
+=cut
+
+sub apps {
+    my ($version) = @_;
+    select_version($version => sub {
+        my ($v, $p) = @_;
+        if ( -e $p ) {
+            my $dir = path($p => 'webapps');
+            say "Apps installed for Tomcat version $v:";
+            say for sort map { basename $_ } glob "$dir/*";
+            0;
+        }
+        else {
+            say "Installation path '$p' does not exist";
+            1;
+        }
+    });
+}
+
+=pod
+
 =head2 deploy
     
     tom deploy [VERSION] WARFILE|DIRECTORY
@@ -393,15 +452,15 @@ sub deploy {
 
 =pod
 
-=head2 undeploy
+=head2 remove
 
-    tom undeploy [VERSION] APPNAME
+    tom remove [VERSION] APPNAME
 
 Remove a deployed app from a given version of Tomcat.
 
 =cut
 
-sub undeploy {
+sub remove {
     my ($version, $file);
     if    ( @_ <  1 ) { die "Must specify an app name to remove" }
     elsif ( @_ == 2 ) { ($version, $file) = @_ }
@@ -414,9 +473,14 @@ sub undeploy {
             say "Removing $file from $dir...";
             my $app = path($dir => $file);
             my $war = "$app.war";
-            unlink $app if -e $app;
+            if ( -e $app ) {
+                remove_tree($app);
+                say "DONE.";
+            }
+            else {
+                say "An app called '$file' has not been deployed for Tomcat version $v.";
+            }
             unlink $war if -e $war;
-            say "DONE.";
             0;
         }
         else {
@@ -461,9 +525,11 @@ Usage: $0 [COMMAND] [OPTIONS]
 
      restart - Restart Tomcat server
 
+        apps - List all web applications deployed to a Tomcat server
+
       deploy - Deploy a web application to a Tomcat server
 
-    undeploy - Remove a deployed web application from a Tomcat server
+      remove - Remove a deployed web application from a Tomcat server
 
   Options:
      --port, -p PORT
