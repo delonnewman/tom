@@ -13,6 +13,7 @@ use File::Basename;
 use File::Copy;
 use File::Path qw{ remove_tree };
 use File::Spec;
+use File::Tail;
 
 use Mojo::DOM;
 
@@ -86,7 +87,7 @@ commands(
     restart   => sub { exit restart($VERSION) },
     apps      => sub { exit apps($VERSION) },
     deploy    => sub { exit deploy($VERSION, @ARGV) },
-    remove    => sub { exit remove($VERSION, @ARGV) }
+    remove    => sub { exit remove($VERSION, @ARGV) },
     tail      => sub { exit tail($VERSION, @ARGV) }
 );
 
@@ -373,13 +374,15 @@ version or a log file in CATALINA_HOME/logs.
 =cut
 
 sub tail {
-    my ($version) = @_;
+    my ($version, $log) = @_;
+    $log //= 'catalina.out';
     select_version($version => sub {
         my ($v, $p) = @_;
         if ( -e $p ) {
-            my $dir = path($p => 'webapps');
-            say "Apps installed for Tomcat version $v:";
-            say for sort map { basename $_ } glob "$dir/*";
+            my $file = path($p => logs => $log);
+            say $file, ':';
+            my $t = File::Tail->new(name => $file, tail => 20);
+            while ( local $_ = $t->read ) { print }
             0;
         }
         else {
