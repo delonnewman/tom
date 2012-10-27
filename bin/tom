@@ -88,7 +88,8 @@ commands(
     apps      => sub { exit apps($VERSION) },
     deploy    => sub { exit deploy($VERSION, @ARGV) },
     remove    => sub { exit remove($VERSION, @ARGV) },
-    tail      => sub { exit tail($VERSION, @ARGV) }
+    tail      => sub { exit tail($VERSION, @ARGV) },
+    env       => sub { exit env($VERSION) }
 );
 
 error(\&help) unless @ARGV;
@@ -379,8 +380,13 @@ sub tail {
     select_version($version => sub {
         my ($v, $p) = @_;
         if ( -e $p ) {
-            my $file = path($p => logs => $log);
-            say $file, ':';
+            my $file = do {
+                if ( -e $log ) { $log }
+                else {
+                    path($p => logs => $log);
+                }
+            };
+            say "Viewing '$file':";
             my $t = File::Tail->new(name => $file, tail => 20);
             while ( local $_ = $t->read ) { print }
             0;
@@ -485,6 +491,33 @@ sub remove {
             }
             unlink $war if -e $war;
             0;
+        }
+        else {
+            say "Installation path '$p' does not exist";
+            1;
+        }
+    });
+}
+
+=pod
+
+=head2 env
+    
+    tom env
+
+Display log entries as they are logged can optionally specify a Tomcat
+version or a log file in CATALINA_HOME/logs.
+
+=cut
+
+sub env {
+    my ($version) = @_;
+    select_version($version => sub {
+        my ($v, $p) = @_;
+        if ( -e $p ) {
+            say "Environment for Tomcat Version $v";
+            say "JAVA_HOME: $ENV{JAVA_HOME}";
+            say "INSTALL ROOT: $INSTALL";
         }
         else {
             say "Installation path '$p' does not exist";
