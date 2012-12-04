@@ -5,17 +5,27 @@ use warnings;
 
 use Data::Dump qw{ dump };
 
+use English;
+
+use File::Basename;
+use File::Copy;
+use File::Path qw{ remove_tree make_path };
+use File::Spec;
+use File::Tail;
+
 use Getopt::Long;
 
 use HTTP::Tiny;
 
-use File::Basename;
-use File::Copy;
-use File::Path qw{ remove_tree };
-use File::Spec;
-use File::Tail;
-
 use Mojo::DOM;
+
+BEGIN {
+    # Win32 requirements
+    if ( $^O =~ /win32/i ) {
+        require Win32::OLE;
+        Win32::OLE->import();
+    }
+}
 
 =pod
 
@@ -37,16 +47,18 @@ use Mojo::DOM;
 
 =cut
 
-my $HOME    = $ENV{HOME} // "$ENV{HOMEDRIVE}$ENV{HOMEPATH}";
-my $ROOT    = do {
+my $HOME = $ENV{HOME} // "$ENV{HOMEDRIVE}$ENV{HOMEPATH}";
+my $ROOT = do {
     my $r = path($HOME => '.tom');
     mkdir $r unless -e $r;
     $r;
 };
 
-my $INSTALL = path($HOME => '.local');
-my $VFILE   = path($ROOT => 'version');
-my @MIRRORS = map { chomp; "$_/tomcat" } <DATA>;
+my $INSTALL   = path($ROOT => 'containers');
+my $VFILE     = path($ROOT => 'version');
+my @MIRRORS   = map { chomp; "$_/tomcat" } <DATA>;
+my $JAVA_BASE = 'C:/Program\ Files/Java';
+my $ZIP_PATH  = path($HOME => 'bin' => '7za.exe');
 
 # ping defaults
 my $HOST    = 'localhost';
@@ -65,7 +77,7 @@ GetOptions(
 
 # Grab second arg after parsing flags
 my $VERSION = do {
-    if ( $ARGV[1] && $ARGV[1] =~ /^\d{1,1}(\.\d{1,1}\.\d{1,2})?$/ ) {
+    if ( $ARGV[1] && $ARGV[1] =~ /^\d{1,1}((\.\d{1,1})?\.\d{1,2})?$/ ) {
         $ARGV[1];
     }
     else {
@@ -89,13 +101,31 @@ commands(
     deploy    => sub { exit deploy($VERSION, @ARGV) },
     remove    => sub { exit remove($VERSION, @ARGV) },
     tail      => sub { exit tail($VERSION, @ARGV) },
-    env       => sub { exit env($VERSION) }
+    env       => sub { exit env($VERSION) },
+    java      => sub { exit java($VERSION) }
 );
 
 error(\&help) unless @ARGV;
 
 
 =pod
+
+=head1 OPTIONS
+
+=head2 C<-p>, C<--port>
+
+Specify the port for pinging (used in C<ping>, C<restart>, C<up>,
+and C<down> commands)
+
+=head2 C<-h>, C<--host>
+
+Specify the host for pinging (used in C<ping>, C<restart>, C<up>,
+and C<down> commands)
+
+=head2 C<-t>, C<--timeout>
+
+Specify the timeout (in seconds) for pinging (used in C<ping>,
+C<restart>, C<up>, and C<down> commands)
 
 =head1 COMMANDS
 
@@ -505,8 +535,7 @@ sub remove {
     
     tom env
 
-Display log entries as they are logged can optionally specify a Tomcat
-version or a log file in CATALINA_HOME/logs.
+Display environment information
 
 =cut
 
@@ -516,13 +545,36 @@ sub env {
         my ($v, $p) = @_;
         if ( -e $p ) {
             say "Environment for Tomcat Version $v";
+            say "OS: $OSNAME";
+            say "Perl: $PERL_VERSION";
             say "JAVA_HOME: $ENV{JAVA_HOME}";
-            say "INSTALL ROOT: $INSTALL";
+            say "Containers Path: $INSTALL";
         }
         else {
             say "Installation path '$p' does not exist";
             1;
         }
+    });
+}
+
+=pod
+
+=head2 java
+    
+    tom java [JAVA_VERSION]
+
+Set and view JAVA_HOME environment variable
+
+=cut
+
+sub java {
+    my ($version) = @_;
+    select_java($version => sub {
+        my ($v, $p) = @_;
+        $ENV{JAVA_HOME} = $v;
+        my $sh = Win32::OLE->new("WScript.Shell");
+        $sh->RegWrite("HKEY_CURRENT_USER\\Environment\\JAVA_HOME", $v);
+        say_java_home();
     });
 }
 
@@ -566,6 +618,10 @@ Usage: $0 [COMMAND] [OPTIONS]
       deploy - Deploy a web application to a Tomcat server
 
       remove - Remove a deployed web application from a Tomcat server
+
+         env - Display environment information
+
+        java - Set or view Java version
 
   Options:
      --port, -p PORT
@@ -623,28 +679,76 @@ sub parse_version {
 }
 
 sub get_versions {
-    map { /(\d\.\d(?:\.\d\d)?)/g; $1 }
+    my @versions = map { /(\d\.\d(?:\.\d\d)?)/g; $1 }
     glob "$INSTALL/apache-tomcat-*";
 }
 
+sub selector {
+    my %args = @_;
+    $args{versions} || die "versions callback is required";
+
+    return sub {
+        my ($version, $fn) = @_;
+
+        my @versions = $args{versions}->($version);
+        if ( @versions == 1 ) {
+            if ( $args{one} ) { return $args{one}->($versions[0], $fn) }
+            else {
+                return $fn->($versions[0]);
+            }
+        }
+        elsif ( @versions < 1 ) {
+            if ( $args{less} ) { return $args{less}->($fn) }
+            else {
+                say "Version $version is not installed, use the install command to install it";
+                return 1;
+            }
+        }
+        else {
+            if ( $args{more} ) { return $args{more}->(\@versions, $fn) }
+            else {
+                say "Which version?";
+                say for @versions;
+                return 1;
+            }
+        }
+    
+        undef;
+    }
+}
+
 sub select_version($$) {
-    my ($version, $fn) = @_;
+    selector(
+        versions => sub {
+            my ($v) = @_;
+            grep { /^$v/ } get_versions
+        },
+        one => sub {
+            my ($v, $fn) = @_;
+            $fn->($v, path($INSTALL => "apache-tomcat-$v"));
+        }
+    )->(@_);
+}
 
-    my @versions = grep { /^$version/ } get_versions;
-    if ( @versions == 1 ) {
-        return $fn->($versions[0], path($INSTALL => "apache-tomcat-$versions[0]"));
-    }
-    elsif ( @versions < 1 ) {
-        say "Version $version is not installed, use the install command to install it";
-        return 1;
-    }
-    else {
-        say "Which version?";
-        say for @versions;
-        return 1;
-    }
+sub select_java($$) {
+    selector(
+        versions => sub {
+            my ($v) = @_;
+            grep { /$v/ } glob("$JAVA_BASE/jdk*");
+        },
+        less => sub {
+            say "Java versions installed:";
+            for (glob "$JAVA_BASE/jdk*") {
+                print;
+                print " - JAVA_HOME" if /$ENV{JAVA_HOME}/;
+                say '';
+            }
+        }
+    )->(@_);
+}
 
-    undef;
+sub say_java_home {
+    say "JAVA_HOME is set to '$ENV{JAVA_HOME}'";
 }
 
 sub slurp {
@@ -654,6 +758,7 @@ sub slurp {
     <$fh>;
 }
 
+# write content to file
 sub write_to {
     my ($file, $content) = @_;
     open my $fh, '>', $file or die "can't write to $file";
@@ -661,18 +766,19 @@ sub write_to {
     $content;
 }
 
+# extract zip file or gzip tarball from file to a given path 
 sub extract {
     my ($f, $dir) = @_;
+    say "'$dir'";
+    make_path($dir) unless -e $dir;
     say "Extracting...";
     if ( $^O =~ /win32/i ) {
-        my $d = dirname __FILE__;
-        my $z = "$d\\7zip\\7za.exe";
-        if ( -e $z ) {
-            system "\"$z\" x -y -o\"$dir\" $f";
+        if ( -e $ZIP_PATH ) {
+            system "\"$ZIP_PATH\" x -y -o\"$dir\" $f";
             say "ok";
         }
         else {
-            say "Can't find 7zip at '$z'";
+            say "Can't find 7zip at '$ZIP_PATH'";
             return 1;
         }
     }
@@ -684,6 +790,7 @@ sub extract {
     return 0;
 }
 
+# plural inflection
 sub plural {
     my ($n, $str) = @_;
     if ( $n == 1 ) { "$n $str" }
@@ -693,6 +800,7 @@ sub plural {
     }
 }
 
+# fetch content from a url, cache HTTP::Tiny object
 {
     my $t;
     sub fetch($$) {
@@ -706,6 +814,7 @@ sub plural {
     }
 }
 
+# match the first
 sub first(&@) {
     my ($fn, @list) = @_;
     for my $x (@list) {
@@ -714,7 +823,7 @@ sub first(&@) {
     return undef;
 }
 
-# Yes, for a monkey!!
+# Say yes for a monkey!!
 sub Mojo::Collection::to_a {
     my ($self) = @_;
     @$self;
@@ -744,23 +853,10 @@ sub get_available {
 }
 
 sub select_available($$) {
-    my ($version, $fn) = @_;
-
-    my @versions = grep { /^$version/ } get_available;
-    if ( @versions == 1 ) {
-        return $fn->($versions[0]);
-    }
-    elsif ( @versions < 1 ) {
-        say "Version $version is not installed, use the install command to install it";
-        return 1;
-    }
-    else {
-        say "Which version?";
-        say for @versions;
-        return 1;
-    }
-
-    undef;
+    selector(versions => sub {
+        my ($v) = @_;
+        grep { /^$v/ } get_available
+    })->(@_);
 }
 
 sub fetch_install($$) {
@@ -831,6 +927,8 @@ sub mirrormap {
     Mojo::DOM 3.38
 
 =head2 Windows
+
+    Win32::OLE
 
     7za (the command line version of 7zip) installed in C:\Users\[USERNAME]\bin
     for install command
