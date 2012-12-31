@@ -574,6 +574,8 @@ sub java {
         $ENV{JAVA_HOME} = $v;
         my $sh = Win32::OLE->new("WScript.Shell");
         $sh->RegWrite("HKEY_CURRENT_USER\\Environment\\JAVA_HOME", $v);
+        say ".\\scripts\\set-java.ps1 \"$v\"";
+        system("& .\\scripts\\set-java.ps1 \"$v\"");
         say_java_home();
     });
 }
@@ -738,9 +740,10 @@ sub select_java($$) {
         },
         less => sub {
             say "Java versions installed:";
+            my $j = $ENV{JAVA_HOME}; $j =~ s/\\/\//g;
             for (glob "$JAVA_BASE/jdk*") {
                 print;
-                print " - JAVA_HOME" if /$ENV{JAVA_HOME}/;
+                print " - JAVA_HOME" if /$j/;
                 say '';
             }
         }
