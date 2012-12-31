@@ -59,7 +59,7 @@ List all installed versions of Tomcat
 ping
 ----
 
-   tom ping [OPTIONS]
+    tom ping [OPTIONS]
 
 Test if a HTTP server is running at a given host and port combination,
 can also specify a timeout in seconds. The default host is "localhost",
@@ -122,13 +122,15 @@ General
 -------
 
 perl 5.10 or greater
+
 HTTP::Tiny
+
 Mojo::DOM 3.38
 
 Windows
 -------
     
-7za (the command line version of 7zip) installed in C:\Users\[USERNAME]\bin
+7za (the command line version of 7zip) installed in `C:\Users\[USERNAME]\bin`
 for install command
 
 Unix
@@ -139,5 +141,5 @@ GNU tar (on PATH) for install command
 AUTHOR
 ======
     
-Delon Newman &gt;delon.newman@gmail.com&lt;
+Delon Newman &lt;delon.newman@gmail.com&gt;
 
