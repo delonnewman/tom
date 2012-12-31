@@ -9,3 +9,7 @@ x Add log viewing with a "tail" command
   - Make App::Tom, App::Tom::Commands, and App::Tom::Utils, modules
 - create website via Github
 - Compile into Windows binary
+- Add more tests
+- Add java command for specifying Java version
+- Add "environments" where you can create saved environments,
+    a combination of a Java version, Tomcat version, Jars, and environment variables
