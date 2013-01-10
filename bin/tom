@@ -2,5 +2,6 @@
 use v5.10;
 use strict;
 use warnings;
+use lib qw{ lib };
 use App::Tom;
 App::Tom::run(@ARGV);
