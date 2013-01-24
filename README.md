@@ -127,11 +127,13 @@ HTTP::Tiny
 
 Mojo::DOM 3.38
 
+File::Tail
+
 Windows
 -------
     
 7za (the command line version of 7zip) installed in `C:\Users\[USERNAME]\bin`
-for install command
+for install comand
 
 Unix
 ----
