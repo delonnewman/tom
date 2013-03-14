@@ -102,7 +102,8 @@ commands(
     remove    => sub { exit remove($VERSION, @ARGV) },
     tail      => sub { exit tail($VERSION, @ARGV) },
     env       => sub { exit env($VERSION) },
-    java      => sub { exit java($VERSION) }
+    java      => sub { exit java($VERSION) },
+    art       => \&art
 );
 
 error(\&help) unless @ARGV;
@@ -625,6 +626,8 @@ Usage: $0 [COMMAND] [OPTIONS]
 
         java - Set or view Java version
 
+         art - View some Java art
+
   Options:
      --port, -p PORT
         Specify an HTTP port (8080 by default)
@@ -955,7 +958,52 @@ sub mirrormap {
 
 sub art {
   return <<ART;
-
+                          MMMM   MMM    MMM                                     
+                           MMMM  MMMM    MMMM                                   
+                            MMMM   MMM    MMM                                   
+                             MMM    MMM    MMM                                  
+                             MMM    MMM    MMM                                  
+                            MMMM   MMM    MMM                                   
+                           MMMM   MMMM   MMMM                                   
+                          MMMM   MMM    MMMM                                    
+                         MMM   MMMM   MMMM                                      
+                        MMM    MMM    MMM                                       
+                        MMM   MMM    MMMM                                       
+                        MMM   MMM    MMM                                        
+                        MMMM  MMMM    MMM                                       
+                         MMMM  MMMM   MMMM                                      
+                          MMM   MMMM    MMM                                     
+                                                                                
+     MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM                   
+     MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM                  
+     MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM   MMMMMMMMM      
+     MMMM777777777777777777777777777777777777777777777777\$MMMMMMMMMMMMMMMMMMM   
+     MMMM777777777777777777777777777777777777777777777777ZMMMMMMMMMM    MMMMMM  
+     MMMM777777777777777777777777777777777777777777777777DMMMMMMM         MMMM  
+     MMMM777777777777777777777777777777777777777777777777MMMMMMM          MMMMM 
+     MMMM777777777777777777777777777777777777777777777777MMMMMM            MMMMM
+     MMMM\$1908874354MMMMM             MMMMM
+      MMMM77777777777777777777777777777777777777777777777MMMM              MMMMM
+      MMMM7777777777777777777777777777777777777777777777\$MMMM              MMMMM
+      MMMM7777777777777777777777777777777777777777777777MMMMM              MMMM 
+      MMMMM777777777777777777777777777777777777777777777MMMMM             MMMMM 
+       MMMM77777777777777777777777777777777777777777777DMMMMM            MMMMM  
+        MMMM7777777777777777777777777777777777777777777MMMMMMM          MMMMM   
+        MMMM877777777777777777777777777777777777777777MMMMMMMMM       MMMMMMM   
+         MMMM7777777777777777777777777777777777777777MMMMM MMMMMMMMMMMMMMMM     
+         MMMMM77777777777777777777777777777777777777MMMMM   MMMMMMMMMMMMM       
+          MMMMM777777777777777777777777777777777777MMMMM      MMMMMMMMM         
+           MMMMMZ777777777777777777777777777777777MMMMM                         
+ MMMMMMMMMMMMMMMMNDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDMMMMMMMMMMMMMMMMM              
+MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM             
+MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM             
+ MMMMMM77777777777777777777777777777777777777777777777777777MMMMM               
+   MMMMM87777777777777777777777777777777777777777777777777MMMMMM                
+    MMMMMMM77777777777777777777777777777777777777777777MMMMMMM                  
+      MMMMMMMMMMZ77777777777777777777777777777777ZMMMMMMMMMMM                   
+        MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM                      
+            MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM                          
+                   MMMMMMMMMMMMMMMMMMMMMMMMMMMMM                                
 ART
 }
 
