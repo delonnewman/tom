@@ -57,7 +57,7 @@ my $ROOT = do {
 my $INSTALL   = path($ROOT => 'containers');
 my $VFILE     = path($ROOT => 'version');
 my @MIRRORS   = map { chomp; "$_/tomcat" } <DATA>;
-my $JAVA_BASE = 'C:/Program\ Files/Java';
+my $JAVA_ROOT = path($ROOT => 'javas');
 my $ZIP_PATH  = path($HOME => 'bin' => '7za.exe');
 
 # ping defaults
@@ -545,9 +545,9 @@ sub env {
         my ($v, $p) = @_;
         if ( -e $p ) {
             say "Environment for Tomcat Version $v";
-            say "OS: $OSNAME";
+            say "OS: ", determine_os();
             say "Perl: $PERL_VERSION";
-            say "JAVA_HOME: $ENV{JAVA_HOME}";
+            say "Java: ", determine_java();
             say "Containers Path: $INSTALL";
         }
         else {
@@ -676,6 +676,35 @@ sub commands {
     }
 }
 
+sub determine_os {
+  if ( $OSNAME ne 'linux' ) { $OSNAME // 'N/A' }
+  else {
+    my $redhat = '/etc/redhat-release';
+    my $debian = '/etc/lsb-release';
+    if ( -e $redhat ) { 
+      local $_ = slurp($redhat);
+      chomp;
+      $_;
+    }
+    elsif ( -e $debian ) {
+      my $desc = grep { /DESCRIPTION/ } split(/\n/, slurp($debian));
+      $desc =~ /="([\w.\s]+)"/;
+      $1;
+    }
+    else { $OSNAME }
+  }
+}
+
+sub determine_java {
+  if ( my $path = $ENV{JAVA_HOME} ) { $path }
+  else {
+    if ( my $out = `which java` ) { chomped($out) }
+    else {
+      "N/A";
+    }
+  }
+}
+
 sub parse_version {
     split /\./ => $_[0];
 }
@@ -736,12 +765,12 @@ sub select_java($$) {
     selector(
         versions => sub {
             my ($v) = @_;
-            grep { /$v/ } glob("$JAVA_BASE/jdk*");
+            grep { /$v/ } glob("$JAVA_ROOT/jdk*");
         },
         less => sub {
             say "Java versions installed:";
             my $j = $ENV{JAVA_HOME}; $j =~ s/\\/\//g;
-            for (glob "$JAVA_BASE/jdk*") {
+            for (glob "$JAVA_ROOT/jdk*") {
                 print;
                 print " - JAVA_HOME" if /$j/;
                 say '';
@@ -759,6 +788,13 @@ sub slurp {
     open my $fh, '<', $file or die "can't read $file";
     local $/='';
     <$fh>;
+}
+
+sub chomped {
+  my ($in) = @_;
+  local $_ = $in;
+  s/\n$//;
+  $_;
 }
 
 # write content to file
@@ -915,6 +951,12 @@ sub mirrormap {
         if ( $^O =~ /win32/i ) { "$path/$pat.zip" }
         else                   { "$path/$pat.tar.gz" }
     } @MIRRORS;
+}
+
+sub art {
+  return <<ART;
+
+ART
 }
 
 }

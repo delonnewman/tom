@@ -1,17 +1,23 @@
-require 5.000;
-use strict;
-use warnings;
-use ExtUtils::MakeMaker;
+use inc::Module::Install;
+use Module::Install::CPANfile;
 
-WriteMakefile(
-	NAME      => 'Tom',
-	AUTHOR    => 'Delon Newman <delon.newman@gmail.com>',
-    ABSTRACT  => 'Controlling Tomcat with simplicity',
-	VERSION   => '1.0',
-    PREREQ_PM => { 
-                   'HTTP::Tiny' => 0, 
-                   'Mojo::DOM'  => 0,
-				   'File::Tail' => 0
-                 },
-    EXE_FILES => [ 'tom' ],
-);
+name 'tom';
+version_from 'lib/Tom.pm';
+perl_version '5.008001';
+#license_from 'bin/tom';
+author_from 'bin/tom';
+#readme_from('bin/tom');
+
+cpanfile;
+
+install_script 'bin/tom';
+
+build_requires 'Test::More';
+#auto_set_repository();
+#auto_provides;
+
+resources
+  homepage => 'https://github.com/delonnewman/tom',
+  bugtracker => 'https://github.com/delonnewman/tom/issues';
+
+WriteAll;

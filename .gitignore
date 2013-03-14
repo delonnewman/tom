@@ -8,3 +8,5 @@ Makefile
 local
 MYMETA.json
 MYMETA.yml
+inc/
+META.*
