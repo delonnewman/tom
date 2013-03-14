@@ -103,7 +103,7 @@ commands(
     tail      => sub { exit tail($VERSION, @ARGV) },
     env       => sub { exit env($VERSION) },
     java      => sub { exit java($VERSION) },
-    art       => \&art
+    art       => sub { say art(); exit 0 }
 );
 
 error(\&help) unless @ARGV;
