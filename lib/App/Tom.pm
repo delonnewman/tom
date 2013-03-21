@@ -13,26 +13,6 @@ use App::Tom::Config qw{ defconfig config setconfig };
 use App::Tom::Utils qw{ path slurp write_to };
 use App::Tom::Commands;
 
-=pod
-
-=head1 NAME
-
-    tom - Control tomcat from the command line with simplicity
-
-=head1 SYNOPSIS
-
-    > tom available
-    > tom install 5.5.35
-    > tom list
-    > tom up 5.5.35
-    > tom down
-    > tom restart
-    > tom ping
-    > tom version 6.0.35
-    > tom uninstall 5.5.35
-
-=cut
-
 defconfig(
   HOME => sub { $ENV{HOME} // "$ENV{HOMEDRIVE}$ENV{HOMEPATH}" },
 
@@ -61,27 +41,6 @@ defconfig(
   # install options
   ADMIN   => 0
 );
-
-=pod
-
-=head1 OPTIONS
-
-=head2 C<-p>, C<--port>
-
-Specify the port for pinging (used in C<ping>, C<restart>, C<up>,
-and C<down> commands)
-
-=head2 C<-h>, C<--host>
-
-Specify the host for pinging (used in C<ping>, C<restart>, C<up>,
-and C<down> commands)
-
-=head2 C<-t>, C<--timeout>
-
-Specify the timeout (in seconds) for pinging (used in C<ping>,
-C<restart>, C<up>, and C<down> commands)
-
-=cut
 
 GetOptions(
   'host=s'    => sub { setconfig('HOST'    => $_[1]) },
@@ -129,139 +88,6 @@ sub MAIN {
 }
 
 1;
-
-=pod
-
-=head1 COMMANDS
-
-=head2 up
-
-    tom up [VERSION]
-
-Starts up the version of tomcat specified or the default version if
-the version is omitted.
-
-=head2 down
-
-    tom down
-
-Shutsdown the currently running tomcat instance
-
-=head2 restart
-
-    tom restart [VERSION] [OPTIONS]
-
-Restarts a currently running instance of tomcat if one is running otherwise
-it just starts a new instance.  Can specify the host, port and timeout (in
-seconds) for testing if a tomcat instance is currently running.
-
-=head2 list
-
-    tom list
-
-List all installed versions of Tomcat
-
-=head2 ping
-
-    tom ping [OPTIONS]
-
-Test if a HTTP server is running at a given host and port combination,
-can also specify a timeout in seconds.  The default host is "localhost",
-the default port is 8080, and the default timeout is 2 seconds.
-
-=head1 version
-
-    tom version VERSION
-
-Set a default version
-
-=head2 available
-
-    tom available
-
-List all versions of Tomcat that are available for install
-
-=head2 uninstall
-
-    tom uninstall VERSION
-
-Uninstalls a version of Tomcat
-
-=head2 install
-
-    tom install VERSION
-
-Installs a version of Tomcat
-
-=head2 tail
-    
-    tom tail [VERSION] [LOGFILE]
-
-Display log entries as they are logged can optionally specify a Tomcat
-version or a log file in CATALINA_HOME/logs.
-
-=head2 apps
-    
-    tom apps [VERSION]
-
-Deploy a web application to a given version of Tomcat via a warfile
-or directory.
-
-=head2 deploy
-    
-    tom deploy [VERSION] WARFILE|DIRECTORY
-
-Deploy a web application to a given version of Tomcat via a warfile
-or directory.
-
-=head2 remove
-
-    tom remove [VERSION] APPNAME
-
-Remove a deployed app from a given version of Tomcat.
-
-=head2 env
-    
-    tom env
-
-Display environment information
-
-=head2 java
-    
-    tom java [JAVA_VERSION]
-
-Set and view JAVA_HOME environment variable
-
-=head2 help
-
-    tom help
-
-Displays a help message
-
-=head1 REQUIREMENTS
-
-=head2 General
-
-    perl 5.10 or greater
-    HTTP::Tiny
-    Mojo::DOM 3.38
-
-=head2 Windows
-
-    Win32::OLE
-
-    7za (the command line version of 7zip) installed in C:\Users\[USERNAME]\bin
-    for install command
-
-=head2 Unix
-
-    GNU tar (on PATH) for install command
-
-=head1 AUTHOR
-
-    Delon Newman <delon.newman@gmail.com>
-
-=cut
 
 __DATA__
 http://mirrors.gigenet.com/apache
