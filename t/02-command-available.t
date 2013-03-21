@@ -16,7 +16,7 @@ my $pat1 = qr/Tomcat versions available for install:\n(\d.\d.\d\d\n)+/;
 stdout_like("$TOM_BIN available", $pat1);
 
 # install a tom cat version
-my $version = "5.5.36";
+my $version = "6.0.35";
 exit_is_num("$TOM_BIN install $version", 0);
 
 # check if it's indicated now
