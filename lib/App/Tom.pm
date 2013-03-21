@@ -44,7 +44,7 @@ defconfig(
 
   INSTALL   => sub { path(config('ROOT') => 'containers') },
   VFILE     => sub { path(config('ROOT') => 'version') },
-  MIRRORS   => sub { map { chomp; "$_/tomcat" } <DATA> },
+  MIRRORS   => sub { [map { chomp; "$_/tomcat" } <DATA>] },
   JAVA_ROOT => sub { path(config('ROOT') => 'javas') },
 
   ZIP_PATH  => sub { path(config('HOME') => 'bin' => '7za.exe') },

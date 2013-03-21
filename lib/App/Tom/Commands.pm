@@ -20,7 +20,8 @@ use HTTP::Tiny;
 use Mojo::DOM;
 
 use lib qw{ lib };
-use App::Tom::Utils qw{ error };
+use App::Tom::Config qw{ config };
+use App::Tom::Utils qw{ error path plural };
 use App::Tom::Commands::Utils;
 
 BEGIN {
@@ -187,7 +188,7 @@ the default port is 8080, and the default timeout is 2 seconds.
 
 sub ping {
     my ($host, $port, $time) =
-      (config('HOST'), config('PORT'), config('TIME'));
+      (config('HOST'), config('PORT'), config('TIMEOUT'));
 
     my $url = "http://$host:$port";
     my $res = HTTP::Tiny->new(timeout => $time)->get($url);

@@ -25,14 +25,21 @@ our @EXPORT_OK = qw{ config defconfig setconfig };
     }
   }
   
+  use Data::Dump qw{ dump };
   sub config($) {
     my ($name) = @_;
     if ( $config{$name} ) {
       if ( ref $config{$name} eq 'CODE' ) {
         my $r = $config{$name}->();
-        if    ( ref $r eq 'ARRAY' ) { @{$r} }
-        elsif ( ref $r eq 'HASH' )  { %{$r} }
-        else                        { $r }
+        if    ( ref $r eq 'ARRAY' ) {
+         if ( wantarray ) { @{$r} }
+         else             {   $r  }
+        }
+        elsif ( ref $r eq 'HASH' )  {
+          if ( wantarray ) { %{$r} }
+          else             {   $r  }
+        }
+        else { $r }
       }
       else { $config{$name} }
     }

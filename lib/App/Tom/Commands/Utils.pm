@@ -32,7 +32,7 @@ use File::Tail;
 use Mojo::DOM;
 
 use App::Tom::Config qw{ config };
-use App::Tom::Utils qw{ error slurp chomped path fetch };
+use App::Tom::Utils qw{ error slurp chomped path fetch first };
 
 sub determine_os {
   if ( $OSNAME ne 'linux' ) { $OSNAME // 'N/A' }
@@ -68,9 +68,10 @@ sub parse_version {
 }
 
 sub get_versions {
-    my @versions = map { /(\d\.\d(?:\.\d\d)?)/g; $1 }
-    my $install  = config('INSTALL');
-    glob "$install/apache-tomcat-*";
+    my $version_re = qr/(\d\.\d(?:\.\d\d)?)/;
+    my @versions   = map { /$version_re/g; $1 }
+    my $install    = config('INSTALL');
+    map { /($version_re)/; $1 } glob "$install/apache-tomcat-*";
 }
 
 sub selector {
