@@ -6,7 +6,7 @@ use App::Tom::Utils qw{
   is_win32
   is_linux
   slurp
-  write_to
+  spit
   plural
   fetch
   first
@@ -23,8 +23,8 @@ is is_win32, do { $^O =~ /win32/i }, 'is_win32';
 # is_linux
 is is_linux, do { $^O =~ /linux/i }, 'is_linux';
 
-# write_to and slurp
-my $cont = write_to('./test.txt', 'this is a test');
+# spit and slurp
+my $cont = spit('./test.txt', 'this is a test');
 is $cont => 'this is a test';
 is slurp('./test.txt') => 'this is a test';
 

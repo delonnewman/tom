@@ -10,7 +10,7 @@ use Data::Dump qw{ dump };
 
 use lib qw{ lib };
 use App::Tom::Config qw{ defconfig config setconfig };
-use App::Tom::Utils qw{ path slurp write_to };
+use App::Tom::Utils qw{ path slurp spit };
 use App::Tom::Commands;
 
 defconfig(
@@ -56,7 +56,7 @@ my $version = do {
   }
   else {
     my $f = config('VFILE');
-    write_to($f => '') unless -e $f;
+    spit($f => '') unless -e $f;
     slurp($f);
   }
 };

@@ -10,7 +10,9 @@ our @EXPORT_OK = qw{
   is_win32
   is_linux
   slurp
+  spit
   write_to
+  read_from
   plural
   fetch
   first
@@ -49,6 +51,12 @@ sub slurp {
     <$fh>;
 }
 
+# alias for slurp
+{
+  no strict;
+  *{read_from} = \&slurp;
+}
+
 sub chomped {
   my ($in) = @_;
   local $_ = $in;
@@ -57,11 +65,17 @@ sub chomped {
 }
 
 # write content to file
-sub write_to {
+sub spit {
     my ($file, $content) = @_;
     open my $fh, '>', $file or die "can't write to $file";
     print $fh $content;
     $content;
+}
+
+# alias for spit
+{
+  no strict;
+  *{write_to} = \&spit;
 }
 
 # plural inflection

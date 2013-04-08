@@ -217,7 +217,7 @@ sub default_version {
 
     select_version($version => sub {
         my ($v) = @_;
-        write_to(config('VFILE') => $v);
+        spit(config('VFILE') => $v);
         say "Default version set to $v";
         return 0;
     });
@@ -278,10 +278,10 @@ sub uninstall {
             my $v = slurp(config('VFILE'));
             if ( $v eq $version ) {
                 if ( my @vs = get_versions() ) {
-                    write_to(config('VFILE') => $vs[0]);
+                    spit(config('VFILE') => $vs[0]);
                 }
                 else {
-                    write_to(config('VFILE') => '');
+                    spit(config('VFILE') => '');
                 }
             }
     
