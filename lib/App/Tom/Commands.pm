@@ -305,6 +305,8 @@ Installs a version of Tomcat
 sub install {
     my ($version) = @_;
 
+    # TODO: remove this admin stuff
+
     error(\&help => 'A version must be specified') unless $version;
 
     my $install = path(config('INSTALL') => "apache-tomcat-$version");

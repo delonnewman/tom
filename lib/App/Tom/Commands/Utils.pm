@@ -174,7 +174,6 @@ sub say_java_home {
 # extract zip file or gzip tarball from file to a given path 
 sub extract {
     my ($f, $dir) = @_;
-    say "'$dir'";
     make_path($dir) unless -e $dir;
     say "Extracting...";
     if ( $^O =~ /win32/i ) {
@@ -240,13 +239,11 @@ sub fetch_install($$) {
     my $work = path(config('ROOT') => 'work');
     mkdir $work unless -e $work;
 
-    say "Downloading...";
-
     my $t = HTTP::Tiny->new;
     for my $url (@urls) {
+        say "Downloading from $url...";
         my $f = path($work => basename $url);
 
-        say $f;
         if ( -e $f ) {
             my $r = extract($f => config('INSTALL'));
             say "Installed Tomcat version $version.";
