@@ -231,10 +231,10 @@ sub select_available($$) {
     })->(@_);
 }
 
-sub fetch_install($$) {
-    my ($version, $fn) = @_;
+sub fetch_install {
+    my ($version, @urls) = @_;
 
-    my @urls = $fn->($version);
+    #my @urls = $fn->($version);
 
     my $work = path(config('ROOT') => 'work');
     mkdir $work unless -e $work;

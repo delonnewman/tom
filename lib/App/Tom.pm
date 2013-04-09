@@ -45,8 +45,7 @@ defconfig(
 GetOptions(
   'host=s'    => sub { setconfig('HOST'    => $_[1]) },
   'port=s'    => sub { setconfig('PORT'    => $_[1]) },
-  'timeout=i' => sub { setconfig('TIMEOUT' => $_[1]) },
-  'admin'     => sub { setconfig('ADMIN'   => $_[1]) }
+  'timeout=i' => sub { setconfig('TIMEOUT' => $_[1]) }
 );
 
 # Grab second arg after parsing flags

@@ -305,38 +305,16 @@ Installs a version of Tomcat
 sub install {
     my ($version) = @_;
 
-    # TODO: remove this admin stuff
-
     error(\&help => 'A version must be specified') unless $version;
 
     my $install = path(config('INSTALL') => "apache-tomcat-$version");
     if ( -e $install ) {
         say "Tomcat version $version is already installed at $install";
-        if ( !config('ADMIN') || -e path($install => 'server' => 'webapps' => 'admin') ) {
-            return 0;
-        }
-        else {
-            say "Trying to install version $version";
-            fetch_install($version => sub {
-                mirrormap($version => "apache-tomcat-$version-admin");
-            });
-        }
+        return 0;
     }
     else {
         say "Trying to install version $version";
-        my $r = fetch_install($version => sub {
-            mirrormap($version => "apache-tomcat-$version");
-        });
-
-        if ( config('ADMIN') ) {
-            say "Installing admin app for version $version";
-            fetch_install($version => sub {
-                mirrormap($version => "apache-tomcat-$version-admin");
-            });
-        }
-        else {
-            return $r;
-        }
+        return fetch_install($version => mirrormap($version => "apache-tomcat-$version"));
     }
 }
 
