@@ -30,6 +30,11 @@ use File::Spec;
 
 use HTTP::Tiny;
 
+use Mojo::DOM;
+
+sub is_win32() { $^O =~ /win32/i }
+sub is_linux() { $^O =~ /linux/i }
+
 sub path { File::Spec->join(@_) }
 
 sub error {
@@ -44,10 +49,10 @@ sub error {
     exit 1;
 }
 
-sub slurp {
+sub slurp($) {
     my ($file) = @_;
     open my $fh, '<', $file or die "can't read $file";
-    local $/='';
+    local $/='' unless wantarray;
     <$fh>;
 }
 
@@ -57,7 +62,7 @@ sub slurp {
   *{read_from} = \&slurp;
 }
 
-sub chomped {
+sub chomped($) {
   my ($in) = @_;
   local $_ = $in;
   s/\n$//;
@@ -65,7 +70,7 @@ sub chomped {
 }
 
 # write content to file
-sub spit {
+sub spit($$) {
     my ($file, $content) = @_;
     open my $fh, '>', $file or die "can't write to $file";
     print $fh $content;

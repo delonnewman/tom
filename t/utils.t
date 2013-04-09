@@ -7,15 +7,18 @@ use App::Tom::Utils qw{
   is_linux
   slurp
   spit
+  read_from
+  write_to
   plural
   fetch
   first
+  chomped
 };
 
 use File::Spec;
 
 # path
-is path(qw{ a b c }) => File::Spec->join(qw{ a b c}), 'testing path';
+is path(qw{ a b c }), File::Spec->join(qw{ a b c}), 'testing path';
 
 # is_win32
 is is_win32, do { $^O =~ /win32/i }, 'is_win32';
@@ -23,10 +26,20 @@ is is_win32, do { $^O =~ /win32/i }, 'is_win32';
 # is_linux
 is is_linux, do { $^O =~ /linux/i }, 'is_linux';
 
-# spit and slurp
-my $cont = spit('./test.txt', 'this is a test');
-is $cont => 'this is a test';
+# spit and slurp, write_to and read_from
+my $c1 = spit('./test.txt', 'this is a test');
+is $c1 => 'this is a test';
 is slurp('./test.txt') => 'this is a test';
+
+# array context
+spit './test-array-context.txt', "this\nis\na\nlist";
+my @lines = slurp('./test-array-context.txt');
+is_deeply \@lines, ["this\n", "is\n", "a\n", "list"];
+is slurp('./test-array-context.txt') => "this\nis\na\nlist";
+
+my $c2 = write_to('./test1.txt', 'this is another test');
+is $c2 => 'this is another test';
+is read_from('./test1.txt') => 'this is another test';
 
 # plural
 is plural(1, 'test')   => '1 test';
@@ -38,13 +51,14 @@ is plural(6, 'sax')    => '6 saxes';
 is plural(7, 'search') => '7 searches';
 
 # first
-#my $f = first { $_ == 5 } (1, 2, 3, 4, 5);
-#print "\$f: $f";
-#ok do { $f == 2 };
+my $f = first { $_[0] % 2 == 0 } 1..5;
+is $f, 2;
 
 fetch 'http://google.com' => sub {
   my ($dom) = @_;
   ok $dom->isa('Mojo::DOM');
 };
+
+is chomped "hiya\n", "hiya";
 
 done_testing;

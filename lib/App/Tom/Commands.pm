@@ -21,7 +21,7 @@ use Mojo::DOM;
 
 use lib qw{ lib };
 use App::Tom::Config qw{ config };
-use App::Tom::Utils qw{ error path plural };
+use App::Tom::Utils qw{ error path plural slurp spit };
 use App::Tom::Commands::Utils;
 
 BEGIN {
@@ -270,10 +270,8 @@ sub uninstall {
         my ($version) = @_;
         my $install = path(config('INSTALL') => "apache-tomcat-$version");
         if ( -e $install ) {
-            if ( $^O =~ /win32/i ) { system "cmd.exe /K \"rmdir /S /Q $install && exit\"" }
-            else {
-                unlink $install or error(undef, $!);
-            }
+            # TODO: check if this works on windows
+            remove_tree $install or error(undef, $!);
     
             my $v = slurp(config('VFILE'));
             if ( $v eq $version ) {
@@ -494,8 +492,8 @@ sub env {
             say "Environment for Tomcat Version $v";
             say "OS: ", determine_os();
             say "Perl: $PERL_VERSION";
-            say "Java: ", determine_java();
             say "Containers Path: ", config('INSTALL');
+            say "Java: ", determine_java();
         }
         else {
             say "Installation path '$p' does not exist";
@@ -519,10 +517,6 @@ sub java {
     select_java($version => sub {
         my ($v, $p) = @_;
         $ENV{JAVA_HOME} = $v;
-        my $sh = Win32::OLE->new("WScript.Shell");
-        $sh->RegWrite("HKEY_CURRENT_USER\\Environment\\JAVA_HOME", $v);
-        say ".\\scripts\\set-java.ps1 \"$v\"";
-        system("& .\\scripts\\set-java.ps1 \"$v\"");
         say_java_home();
     });
 }

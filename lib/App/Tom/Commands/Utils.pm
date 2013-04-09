@@ -53,7 +53,7 @@ sub determine_os {
   }
 }
 
-sub determine_java {
+sub get_java_path {
   if ( my $path = $ENV{JAVA_HOME} ) { $path }
   else {
     if ( my $out = `which java` ) { chomped($out) }
@@ -61,6 +61,24 @@ sub determine_java {
       "N/A";
     }
   }
+}
+
+sub get_java_version {
+  my ($path) = @_;
+  if ( !-e $path ) { "N/A" }
+  else {
+    local $\='';
+    open(my $info, "$path -version 2>&1 |") or die "Can't read from $path: $!"; 
+    <$info> =~ /(\d\.\d\.\d_\d\d)/;
+    $1;
+  }
+}
+
+sub determine_java {
+  my $path    = get_java_path();
+  my $version = get_java_version($path);
+
+  "$version ($path)";
 }
 
 sub parse_version {

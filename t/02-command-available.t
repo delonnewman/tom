@@ -16,7 +16,7 @@ my $pat1 = qr/Tomcat versions available for install:\n(\d.\d.\d\d\n)+/;
 stdout_like("$TOM_BIN available", $pat1);
 
 # install a tom cat version
-my $version = "6.0.35";
+my $version = "6.0.36";
 exit_is_num("$TOM_BIN install $version", 0);
 
 # check if it's indicated now
@@ -24,6 +24,6 @@ my $pat2 = qr/$version - installed/;
 stdout_like("$TOM_BIN available", $pat2);
 
 # clean up
-exit_is_num("$TOM_BIN uninstall 5", 0);
+exit_is_num("$TOM_BIN uninstall $version", 0);
 
 done_testing;
