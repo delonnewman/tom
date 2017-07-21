@@ -48,6 +48,7 @@ our @EXPORT = qw{
   deploy
   remove
   env
+  show_path
   java
   help
   art
@@ -274,7 +275,7 @@ sub uninstall {
             remove_tree $install or error(undef, $!);
     
             my $v = slurp(config('VFILE'));
-            if ( $v eq $version ) {
+            if ( $v and $v eq $version ) {
                 if ( my @vs = get_versions() ) {
                     spit(config('VFILE') => $vs[0]);
                 }
@@ -330,8 +331,11 @@ version or a log file in CATALINA_HOME/logs.
 =cut
 
 sub tail {
-    my ($version, $log) = @_;
-    $log //= 'catalina.out';
+    my ($version, $log);
+    if    ( @_ == 1 ) { ($version, $log) = ($_[0], 'catalina.out') }
+    elsif ( @_ == 2 ) { ($version, $log) = @_ }
+    else              { die "tail died" }
+
     select_version($version => sub {
         my ($v, $p) = @_;
         if ( -e $p ) {
@@ -484,6 +488,27 @@ sub env {
 
 =pod
 
+=head2 path
+
+    tom path [VERSION]
+
+Display a container's path (great for piping to other commands).
+
+=cut
+
+sub show_path {
+  my ($version) = @_;
+
+  select_version($version => sub {
+      my ($v, $p) = @_;
+      print $p;
+  });
+
+  0;
+}
+
+=pod
+
 =head2 java
     
     tom java [JAVA_VERSION]
@@ -518,34 +543,28 @@ Usage: $0 [COMMAND] [OPTIONS]
   Commands:
         help - Display this message
 
+  Tomcat Administration:
      install - Install a version of Tomcat
-
    uninstall - Uninstall a version of Tomcat
-
         list - List installed versions
-
    available - List versions available for install
-
      version - Set default version
-
         ping - Test if Tomcat is up
-
           up - Startup Tomcat server
-
         down - Shutdown Tomcat server
-
      restart - Restart Tomcat server
 
+  Application Deployment:
         apps - List all web applications deployed to a Tomcat server
-
       deploy - Deploy a web application to a Tomcat server
-
       remove - Remove a deployed web application from a Tomcat server
 
+  Environment:
          env - Display environment information
-
+        path - Display Tom's container path
         java - Set or view Java version
 
+  Fun:
          art - View some Java art
 
   Options:
@@ -561,7 +580,7 @@ Usage: $0 [COMMAND] [OPTIONS]
   returns 0 on success and 1 on failure
 HELP
 
-    exit 0;
+   0;
 }
 
 =pod

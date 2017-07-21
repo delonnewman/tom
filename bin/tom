@@ -3,6 +3,7 @@ use v5.10;
 use strict;
 use warnings;
 use lib qw{ lib };
+use File::Tail; # For some reason Par::Packer needs this
 use App::Tom;
 
 App::Tom::MAIN(@ARGV);

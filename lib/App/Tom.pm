@@ -6,7 +6,7 @@ use warnings;
 our $VERSION = '0.1';
 
 use Getopt::Long;
-use Data::Dump qw{ dump };
+use Data::Dump qw{ dd dump };
 
 use lib qw{ lib };
 use App::Tom::Config qw{ defconfig config setconfig };
@@ -61,10 +61,11 @@ my $version = do {
 };
 
 sub MAIN {
-  my @args = @_;
+  my @args      = @_;
+  my @rest_args = @args[1..$#args]; # args without the command
 
   commands(
-    help      => \&help,
+    help      => sub { exit help() },
     install   => sub { exit install($version) },
     uninstall => sub { exit uninstall($version) },
     list      => sub { exit list($version) },
@@ -75,10 +76,11 @@ sub MAIN {
     version   => sub { exit default_version($version) },
     restart   => sub { exit restart($version) },
     apps      => sub { exit apps($version) },
-    deploy    => sub { exit deploy($version, @args) },
-    remove    => sub { exit remove($version, @args) },
-    tail      => sub { exit tail($version, @args) },
+    deploy    => sub { exit deploy($version, @rest_args) },
+    remove    => sub { exit remove($version, @rest_args) },
+    tail      => sub { exit tail($version, @rest_args) },
     env       => sub { exit env($version) },
+    path      => sub { exit show_path($version) },
     java      => sub { exit java($version) },
     art       => \&art
   )->(@args);

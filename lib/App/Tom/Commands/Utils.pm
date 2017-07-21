@@ -130,7 +130,10 @@ sub select_version($$) {
     selector(
         versions => sub {
             my ($v) = @_;
-            grep { /^$v/ } get_versions
+            if ( !$v ) { get_versions }
+            else {
+              grep { /^$v/ } get_versions
+            }
         },
         one => sub {
             my ($v, $fn) = @_;
