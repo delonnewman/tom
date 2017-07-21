@@ -212,14 +212,14 @@ sub get_available {
         fetch($url => sub {
             my ($dom) = @_;
             $dom->find('a')
-                ->pluck('text')
+                ->map(sub { shift->text })
                 ->grep(qr/tomcat-\d/)
                 ->map(sub {
                     my ($l) = @_;
                     fetch "$url/$l" => sub {
                         my ($dom) = @_;
                         $dom->find('a')
-                            ->pluck('text')
+                            ->map(sub { shift->text })
                             ->grep(qr/v\d.\d.\d\d/);
                     };
                 })->map(sub{ my ($x) = @_; @$x if ref $x });
