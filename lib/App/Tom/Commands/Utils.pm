@@ -17,11 +17,13 @@ our @EXPORT = qw{
   select_available
   fetch_install
   mirrormap
+  open_browser
+  http_is_up
 };
 
 use Data::Dump qw{ dump };
 
-use English;
+use English qw{ -no_match_vars };
 
 use File::Basename;
 use File::Copy;
@@ -32,7 +34,7 @@ use File::Tail;
 use Mojo::DOM;
 
 use App::Tom::Config qw{ config };
-use App::Tom::Utils qw{ error slurp chomped path fetch first };
+use App::Tom::Utils qw{ error slurp chomped path fetch first is_linux is_macos is_win32 };
 
 sub determine_os {
   if ( $OSNAME ne 'linux' ) { $OSNAME // 'N/A' }
@@ -87,7 +89,6 @@ sub parse_version {
 
 sub get_versions {
     my $version_re = qr/(\d\.\d(?:\.\d\d)?)/;
-    my @versions   = map { /$version_re/g; $1 }
     my $install    = config('INSTALL');
     map { /($version_re)/; $1 } glob "$install/apache-tomcat-*";
 }
@@ -285,6 +286,29 @@ sub mirrormap {
         if ( $^O =~ /win32/i ) { "$path/$pat.zip" }
         else                   { "$path/$pat.tar.gz" }
     } config('MIRRORS');
+}
+
+sub open_browser {
+  my ($url) = @_;
+
+  if ($ENV{BROWSER}) {
+    exec $ENV{BROWSER} => $url;
+  }
+  elsif (is_win32()) {
+    exec explorer => $url;
+  }
+  elsif (is_macos()) {
+    exec open => $url;
+  }
+  else {
+    die 'I don\'t know how to open a browser for you. Set "BROWSER" environment variable to your browsers executable';
+  }
+}
+
+sub http_is_up {
+  my ($time, $url) = @_;
+  my $res = HTTP::Tiny->new(timeout => $time)->get($url);
+  !!$res->{success};
 }
 
 1;

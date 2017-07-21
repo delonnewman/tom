@@ -15,13 +15,11 @@ use File::Tail;
 
 use Getopt::Long;
 
-use HTTP::Tiny;
-
 use Mojo::DOM;
 
 use lib qw{ lib };
 use App::Tom::Config qw{ config };
-use App::Tom::Utils qw{ error path plural slurp spit };
+use App::Tom::Utils qw{ error path plural slurp spit delay_while http_is_up partial1 };
 use App::Tom::Commands::Utils;
 
 BEGIN {
@@ -119,6 +117,11 @@ sub ctl {
             say "running '$bin'";
             system $bin;
             say "DONE.";
+            if ($cmd eq 'startup') {
+              delay_while
+                sub { ping() == 1 },
+                sub { open_browser "http://localhost:8080" };
+            }
             return 0;
         }
         else {
@@ -143,7 +146,9 @@ seconds) for testing if a tomcat instance is currently running.
 sub restart {
     my ($version) = @_;
     ctl(shutdown => $version);
-    ctl(startup  => $version);
+    delay_while
+      sub { ping() == 0 },
+      sub { ctl(startup  => $version) };
 }
 
 =pod
@@ -192,8 +197,7 @@ sub ping {
       (config('HOST'), config('PORT'), config('TIMEOUT'));
 
     my $url = "http://$host:$port";
-    my $res = HTTP::Tiny->new(timeout => $time)->get($url);
-    if ( $res->{success} ) {
+    if ( http_is_up($time, $url) ) {
         say "An HTTP server is up at $url";
         return 0;
     }

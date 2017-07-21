@@ -9,6 +9,7 @@ our @EXPORT_OK = qw{
   error
   is_win32
   is_linux
+  is_macos
   slurp
   spit
   write_to
@@ -17,6 +18,10 @@ our @EXPORT_OK = qw{
   fetch
   first
   chomped
+  delay
+  delay_while
+  http_is_up
+  partial1
 };
 
 use Data::Dump qw{ dump };
@@ -34,6 +39,7 @@ use Mojo::DOM;
 
 sub is_win32() { $^O =~ /win32/i }
 sub is_linux() { $^O =~ /linux/i }
+sub is_macos() { $^O =~ /darwin/i }
 
 sub path { File::Spec->join(@_) }
 
@@ -113,7 +119,33 @@ sub first(&@) {
   for my $x (@list) {
     return $x if !!$fn->($x);
   }
-  return undef;
+  return;
+}
+
+sub delay {
+  my ($secs, $sub) = @_;
+  my $ttl = time() + $secs;
+  sleep 1 while time() < $ttl;
+  return $sub->();
+}
+
+sub delay_while {
+  my ($pred, $sub) = @_;
+  sleep 1 while $pred->();
+  return $sub->();
+}
+
+sub http_is_up {
+  my ($url, $secs) = @_;
+  $secs //= 2;
+  my $res = HTTP::Tiny->new(timeout => $secs)->get($url);
+  !!$res->{success};
+}
+
+sub partial1 {
+  my ($f, $x) = @_;
+  return sub { $f->($x, @_) } if $x;
+  return sub { $f->(@_) };
 }
 
 1;
