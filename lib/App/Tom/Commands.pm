@@ -537,8 +537,9 @@ Displays a help message
 =cut
 
 sub help {
+  my $bin = basename($0);
     say <<HELP;
-Usage: $0 [COMMAND] [OPTIONS]
+Usage: $bin [COMMAND] [OPTIONS]
 
   Commands:
         help - Display this message
