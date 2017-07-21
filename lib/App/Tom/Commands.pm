@@ -3,7 +3,7 @@ use v5.10;
 use strict;
 use warnings;
 
-use Data::Dump qw{ dump };
+use Data::Dump qw{ dd };
 
 use English;
 
@@ -19,7 +19,7 @@ use Mojo::DOM;
 
 use lib qw{ lib };
 use App::Tom::Config qw{ config };
-use App::Tom::Utils qw{ error path plural slurp spit delay_while http_is_up partial1 };
+use App::Tom::Utils qw{ error path plural slurp spit delay_while http_is_up http_get fmt_params };
 use App::Tom::Commands::Utils;
 
 BEGIN {
@@ -50,6 +50,7 @@ our @EXPORT = qw{
   java
   help
   art
+  server
 };
 
 sub commands {
@@ -531,6 +532,27 @@ sub java {
 }
 
 =pod
+
+=head2 server
+
+    tom server COMMAND
+
+Issue commands to a remote Tomcat server.
+
+=cut
+
+sub server {
+  my ($command, %params) = @_;
+  my ($host, $port, $ttl) = (config('HOST'), config('PORT'), config('TIMEOUT'));
+  my $user = config('USERNAME') or die 'A username is required for remote access';
+  my $pass = config('PASSWORD') or die 'A password is required for remote access';
+  my $params = fmt_params(%params);
+
+  my $url = "http://$user:$pass\@$host:$port/manager/text/$command?$params";
+  print http_get($url);
+
+  0;
+}
 
 =head2 help
 

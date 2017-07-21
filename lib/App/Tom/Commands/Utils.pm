@@ -18,7 +18,6 @@ our @EXPORT = qw{
   fetch_install
   mirrormap
   open_browser
-  http_is_up
 };
 
 use Data::Dump qw{ dump };
@@ -303,12 +302,6 @@ sub open_browser {
   else {
     die 'I don\'t know how to open a browser for you. Set "BROWSER" environment variable to your browsers executable';
   }
-}
-
-sub http_is_up {
-  my ($time, $url) = @_;
-  my $res = HTTP::Tiny->new(timeout => $time)->get($url);
-  !!$res->{success};
 }
 
 1;

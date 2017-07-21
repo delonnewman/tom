@@ -33,7 +33,7 @@ defconfig(
     ( '/usr/lib/jvm', config('JAVA_ROOT') );
   },
 
-  # ping defaults
+  # HTTP defaults
   HOST    => 'localhost',
   PORT    => '8080',
   TIMEOUT => 2,
@@ -43,9 +43,11 @@ defconfig(
 );
 
 GetOptions(
-  'host=s'    => sub { setconfig('HOST'    => $_[1]) },
-  'port=s'    => sub { setconfig('PORT'    => $_[1]) },
-  'timeout=i' => sub { setconfig('TIMEOUT' => $_[1]) }
+  'username=s' => sub { setconfig('USERNAME' => $_[1]) },
+  'password=s' => sub { setconfig('PASSWORD' => $_[1]) },
+  'host=s'     => sub { setconfig('HOST'     => $_[1]) },
+  'port=s'     => sub { setconfig('PORT'     => $_[1]) },
+  'timeout=i'  => sub { setconfig('TIMEOUT'  => $_[1]) }
 );
 
 # Grab second arg after parsing flags
@@ -82,6 +84,7 @@ sub MAIN {
     env       => sub { exit env($version) },
     path      => sub { exit show_path($version) },
     java      => sub { exit java($version) },
+    server    => sub { exit server(@rest_args) },
     art       => \&art
   )->(@args);
   

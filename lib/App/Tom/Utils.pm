@@ -21,10 +21,12 @@ our @EXPORT_OK = qw{
   delay
   delay_while
   http_is_up
+  http_get
   partial1
+  fmt_params
 };
 
-use Data::Dump qw{ dump };
+use Data::Dump qw{ dd };
 
 use English;
 
@@ -142,10 +144,25 @@ sub http_is_up {
   !!$res->{success};
 }
 
+sub http_get {
+  my ($url) = @_;
+  my $res = HTTP::Tiny->new->get($url);
+  $res->{content};
+}
+
 sub partial1 {
   my ($f, $x) = @_;
   return sub { $f->($x, @_) } if $x;
   return sub { $f->(@_) };
+}
+
+sub fmt_params {
+  my %params = @_;
+  my @buffer = ();
+  for my $key (keys %params) {
+    push @buffer, "$key=$params{$key}";
+  }
+  join '&', @buffer;
 }
 
 1;
