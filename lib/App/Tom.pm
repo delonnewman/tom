@@ -84,7 +84,7 @@ sub MAIN {
     env       => sub { exit env($version) },
     path      => sub { exit show_path($version) },
     java      => sub { exit java($version) },
-    server    => sub { exit server(@rest_args) },
+    server    => sub { exit server($version, @rest_args) },
     art       => \&art
   )->(@args);
   

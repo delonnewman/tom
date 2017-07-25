@@ -198,7 +198,7 @@ sub ping {
       (config('HOST'), config('PORT'), config('TIMEOUT'));
 
     my $url = "http://$host:$port";
-    if ( http_is_up($time, $url) ) {
+    if ( http_is_up($url, $time) ) {
         say "An HTTP server is up at $url";
         return 0;
     }
@@ -542,14 +542,26 @@ Issue commands to a remote Tomcat server.
 =cut
 
 sub server {
-  my ($command, %params) = @_;
+  my ($version, $command, %params) = @_;
   my ($host, $port, $ttl) = (config('HOST'), config('PORT'), config('TIMEOUT'));
   my $user = config('USERNAME') or die 'A username is required for remote access';
   my $pass = config('PASSWORD') or die 'A password is required for remote access';
   my $params = fmt_params(%params);
 
-  my $url = "http://$user:$pass\@$host:$port/manager/text/$command?$params";
-  print http_get($url);
+  select_version $version => sub {
+    my ($v, $p) = @_;
+    my $url;
+    if ($v =~ /^6/) {
+      $url = "http://$user:$pass\@$host:$port/manager/$command?$params";
+    }
+    elsif ($v =~ /^8/) {
+      $url = "http://$user:$pass\@$host:$port/manager/text/$command?$params";
+    }
+    else {
+      die "not sure what to do";
+    }
+    print http_get($url);
+  };
 
   0;
 }
