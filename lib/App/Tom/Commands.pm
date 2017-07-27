@@ -41,6 +41,7 @@ our @EXPORT = qw{
   available
   uninstall
   install
+  register_install
   tail
   apps
   deploy
@@ -300,27 +301,53 @@ sub uninstall {
 
 =pod
 
+=head2 register
+
+    tom register VERSION PATH
+
+Registers a version of Tomcat
+
+=cut
+
+sub register_install {
+  my ($version, $path) = @_;
+
+  error(\&help => 'A version must be specified') unless $version;
+  error(\&help => 'A path must be specified')    unless $path;
+
+  my %reg = registry();
+  $reg{$version} = $path;
+
+  write_registry %reg;
+}
+
+=pod
+
 =head2 install
 
-    tom install VERSION
+    tom install VERSION [PATH]
 
 Installs a version of Tomcat
 
 =cut
 
 sub install {
-    my ($version) = @_;
+    my ($version, $path) = @_;
+
+    $path //= config('INSTALL');
 
     error(\&help => 'A version must be specified') unless $version;
 
-    my $install = path(config('INSTALL') => "apache-tomcat-$version");
+    my $install = path($path => "apache-tomcat-$version");
     if ( -e $install ) {
         say "Tomcat version $version is already installed at $install";
         return 0;
     }
     else {
-        say "Trying to install version $version";
-        return fetch_install($version => mirrormap($version => "apache-tomcat-$version"));
+        say "Trying to install version $version in $install...";
+        my $r = fetch_install($path, $version => mirrormap($version => "apache-tomcat-$version"));
+        register_install $version, $path;
+        return $r;
     }
 }
 

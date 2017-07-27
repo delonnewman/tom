@@ -18,9 +18,11 @@ our @EXPORT = qw{
   fetch_install
   mirrormap
   open_browser
+  registry
+  write_registry
 };
 
-use Data::Dump qw{ dump };
+use Data::Dump qw{ dd };
 
 use English qw{ -no_match_vars };
 
@@ -87,9 +89,8 @@ sub parse_version {
 }
 
 sub get_versions {
-    my $version_re = qr/(\d\.\d(?:\.\d\d)?)/;
-    my $install    = config('INSTALL');
-    map { /($version_re)/; $1 } glob "$install/apache-tomcat-*";
+  my %reg = registry();
+  keys %reg;
 }
 
 sub selector {
@@ -234,10 +235,49 @@ sub select_available($$) {
     })->(@_);
 }
 
-sub fetch_install {
-    my ($version, @urls) = @_;
+# non-destructive chomp
+sub trim {
+  my ($str) = @_;
+  $str =~ s/\s+$//;
+  $str;
+}
 
-    #my @urls = $fn->($version);
+sub registry {
+  my $rfile = config('RFILE');
+
+  if ( -e $rfile ) {
+    map { split /\s-\s/ }
+    map { trim($_) }
+    slurp($rfile);
+  }
+  else {
+    ();
+  }
+}
+
+sub write_registry {
+  my %reg = @_;
+  my $rfile = config('RFILE');
+  open my $fh, '>', $rfile or die "cannot write to '$rfile'";
+  binmode $fh;
+  foreach my $key (keys %reg) {
+    say $fh "$key - $reg{$key}";
+  }
+  close $fh;
+
+  0;
+}
+
+sub install {
+  my ($version, $path, $f) = @_;
+  my $r = extract($f => $path);
+  say "Installed Tomcat version $version in $path.";
+  my $dir = basename $f, qw{ .tar.gz .zip };
+  return $r;
+}
+
+sub fetch_install {
+    my ($path, $version, @urls) = @_;
 
     my $work = path(config('ROOT') => 'work');
     mkdir $work unless -e $work;
@@ -248,9 +288,7 @@ sub fetch_install {
         my $f = path($work => basename $url);
 
         if ( -e $f ) {
-            my $r = extract($f => config('INSTALL'));
-            say "Installed Tomcat version $version.";
-            return $r;
+          return install($version, $path, $f);
         }
         else {
             my $res = $t->get($url);
@@ -262,9 +300,7 @@ sub fetch_install {
             }
 
             if ( -e $f ) {
-                my $r = extract($f => config('INSTALL'));
-                say "Installed Tomcat version $version.";
-                return $r;
+                return install($version, $path, $f);
             }
         }
     }

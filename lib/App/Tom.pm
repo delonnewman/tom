@@ -24,6 +24,7 @@ defconfig(
 
   INSTALL   => sub { path(config('ROOT') => 'containers') },
   VFILE     => sub { path(config('ROOT') => 'version') },
+  RFILE     => sub { path(config('ROOT') => 'registry') },
   MIRRORS   => sub { [map { chomp; "$_/tomcat" } <DATA>] },
   JAVA_ROOT => sub { path(config('ROOT') => 'javas') },
 
@@ -68,7 +69,8 @@ sub MAIN {
 
   commands(
     help      => sub { exit help() },
-    install   => sub { exit install($version) },
+    install   => sub { exit install(@rest_args) },
+    register  => sub { exit register_install(@rest_args) },
     uninstall => sub { exit uninstall($version) },
     list      => sub { exit list($version) },
     available => sub { exit available($version) },
