@@ -14,7 +14,6 @@ $fatpacked{"App/Tom.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"\n".<<'APP_TOM
   our $VERSION = '0.1';
   
   use Getopt::Long;
-  use Data::Dump qw{ dd dump };
   
   use lib qw{ lib };
   use App::Tom::Config qw{ defconfig config setconfig };
@@ -117,8 +116,6 @@ $fatpacked{"App/Tom/Commands.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"\n".<
   use v5.10;
   use strict;
   use warnings;
-  
-  use Data::Dump qw{ dd };
   
   use English;
   
@@ -855,8 +852,6 @@ $fatpacked{"App/Tom/Commands/Utils.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\
     write_registry
   };
   
-  use Data::Dump qw{ dd };
-  
   use English qw{ -no_match_vars };
   
   use File::Basename;
@@ -1257,8 +1252,6 @@ $fatpacked{"App/Tom/Utils.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"\n".<<'A
     partial1
     fmt_params
   };
-  
-  use Data::Dump qw{ dd };
   
   use English;
   
