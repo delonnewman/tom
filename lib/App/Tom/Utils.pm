@@ -26,8 +26,6 @@ our @EXPORT_OK = qw{
   fmt_params
 };
 
-use Data::Dump qw{ dd };
-
 use English;
 
 use File::Basename;

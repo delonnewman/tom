@@ -3,8 +3,6 @@ use v5.10;
 use strict;
 use warnings;
 
-use Data::Dump qw{ dd };
-
 use English;
 
 use File::Basename;

@@ -25,7 +25,6 @@ our @EXPORT_OK = qw{ config defconfig setconfig };
     }
   }
   
-  use Data::Dump qw{ dump };
   sub config($) {
     my ($name) = @_;
     if ( $config{$name} ) {

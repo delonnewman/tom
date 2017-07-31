@@ -22,8 +22,6 @@ our @EXPORT = qw{
   write_registry
 };
 
-use Data::Dump qw{ dd };
-
 use English qw{ -no_match_vars };
 
 use File::Basename;

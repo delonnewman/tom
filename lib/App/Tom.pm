@@ -6,7 +6,6 @@ use warnings;
 our $VERSION = '0.1';
 
 use Getopt::Long;
-use Data::Dump qw{ dd dump };
 
 use lib qw{ lib };
 use App::Tom::Config qw{ defconfig config setconfig };
