@@ -20,6 +20,7 @@ our @EXPORT = qw{
   open_browser
   registry
   write_registry
+  say_java_home
 };
 
 use English qw{ -no_match_vars };
@@ -70,7 +71,7 @@ sub get_java_version {
   else {
     local $\='';
     open(my $info, "$path -version 2>&1 |") or die "Can't read from $path: $!"; 
-    <$info> =~ /(\d\.\d\.\d_\d\d)/;
+    <$info> =~ /(\w+\sversion\s.*)/;
     $1;
   }
 }
@@ -78,6 +79,7 @@ sub get_java_version {
 sub determine_java {
   my $path    = get_java_path();
   my $version = get_java_version($path);
+  return $path unless $version;
 
   "$version ($path)";
 }
@@ -170,7 +172,7 @@ sub get_javas {
 }
 
 sub say_java_home {
-    say "JAVA_HOME is set to '$ENV{JAVA_HOME}'";
+    say "JAVA_HOME is set to '$ENV{JAVA_HOME}'" if $ENV{JAVA_HOME};
 }
 
 # extract zip file or gzip tarball from file to a given path 
